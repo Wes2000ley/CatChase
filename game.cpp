@@ -7,6 +7,8 @@
 ** option) any later version.
 ******************************************************************/
 #include "game.h"
+#include "Dog.h"
+#include "RESOURCE_MANAGER.h"
 
 Game::Game(unsigned int width, unsigned int height)
 	: State(GAME_ACTIVE), Keys(), Width(width), Height(height)
@@ -19,9 +21,17 @@ Game::~Game()
 
 }
 
-void Game::Init()
-{
+void Game::Init() {
+	ResourceManager::LoadShader("resources/shaders/dogsprite.vert", "resources/shaders/dogsprite.frag", nullptr, "sprite");
+	ResourceManager::LoadTexture("resources/textures/48DogSpriteSheet.png", true, "dog");
 
+	Shader shader = ResourceManager::GetShader("sprite");
+	shader.Use();
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(Width), static_cast<float>(Height), 0.0f, -1.0f, 1.0f);
+	shader.SetMatrix4("projection", projection);
+
+	Texture2D texture = ResourceManager::GetTexture("dog");
+	dog_ = new Dog(shader, texture, glm::vec2(100, 100), glm::ivec2(2, 3)); // Use a frame of your choice
 }
 
 void Game::Update(float dt)
@@ -34,7 +44,14 @@ void Game::ProcessInput(float dt)
 
 }
 
-void Game::Render()
-{
-
+void Game::Render() {
+	float scale = static_cast<float>(Height) / 1080.0f; // or Width / 1920.0f
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(Width),
+									  static_cast<float>(Height), 0.0f);
+	if (dog_)
+	{dog_->Draw(projection, scale);}
+}
+void Game::SetSize(unsigned int width, unsigned int height) {
+	this->Width = width;
+	this->Height = height;
 }
