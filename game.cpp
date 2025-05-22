@@ -38,6 +38,8 @@ void Game::Init()
     ResourceManager::LoadTexture("resources/textures/Slime.png", true, "slime");
     ResourceManager::LoadTexture("resources/textures/Skeleton.png", true, "skeleton");
     ResourceManager::LoadTexture("resources/textures/DesertTilemap16x16.png", true, "TileMap");
+	ResourceManager::LoadShader("resources/shaders/line.vert", "resources/shaders/line.frag", nullptr, "grid");
+
 
     // Fixed internal projection
     Shader shader = ResourceManager::GetShader("sprite");

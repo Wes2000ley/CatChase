@@ -2,8 +2,10 @@
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+
 #include "Dog.h"
 #include "Dog.h"
+#include "RESOURCE_MANAGER.h"
 
 unsigned int TileMap::quadVAO_ = 0;
 
@@ -124,16 +126,14 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
 {
     initGridLines(); // Ensure it's set up
 
-    // Use the same shader with flat color override
-    shader_.Use();
-    shader_.SetMatrix4("projection", projection);
-    shader_.SetMatrix4("model", glm::mat4(1.0f));
-    shader_.SetVector4f("uvRect", glm::vec4(0, 0, 1, 1)); // dummy
-
-    // Optional: override color via a uniform in shader (if supported)
-    // shader_.SetVector3f("overrideColor", glm::vec3(0.0f, 1.0f, 0.0f));
+    // Use the custom line shader for drawing the grid
+    Shader gridShader = ResourceManager::GetShader("grid");
+    gridShader.Use();
+    gridShader.SetMatrix4("projection", projection);
+    gridShader.SetMatrix4("model", glm::mat4(1.0f));
+    gridShader.SetVector3f("lineColor", glm::vec3(0.0f, 0.0f, 0.0f)); // Black
 
     glBindVertexArray(gridVAO_);
-    glDrawArrays(GL_LINES, 0, gridLines_.size() / 2);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(gridLines_.size() / 2));
     glBindVertexArray(0);
 }
