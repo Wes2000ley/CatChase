@@ -1,32 +1,33 @@
-
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
 #include <glad/glad.h>
 
-// Texture2D is able to store and configure a texture in OpenGL.
-// It also hosts utility functions for easy management.
+// Texture2D manages a 2D OpenGL texture.
 class Texture2D
 {
 public:
-	// holds the ID of the texture object, used for all texture operations to reference to this particular texture
-	unsigned int ID;
-	// texture image dimensions
-	unsigned int Width, Height; // width and height of loaded image in pixels
-	// texture Format
-	unsigned int Internal_Format; // format of texture object
-	unsigned int Image_Format; // format of loaded image
-	// texture configuration
-	unsigned int Wrap_S; // wrapping mode on S axis
-	unsigned int Wrap_T; // wrapping mode on T axis
-	unsigned int Filter_Min; // filtering mode if texture pixels < screen pixels
-	unsigned int Filter_Max; // filtering mode if texture pixels > screen pixels
-	// constructor (sets default texture modes)
 	Texture2D();
-	// generates texture from image data
-	void Generate(unsigned int width, unsigned int height, unsigned char* data);
-	// binds the texture as the current active GL_TEXTURE_2D texture object
+	~Texture2D();
+
+	void Generate(unsigned int width, unsigned int height, const unsigned char* data);
 	void Bind() const;
+
+	void SetFormat(GLenum internalFormat, GLenum imageFormat);
+
+	[[nodiscard]] unsigned int GetID() const { return ID; }
+	[[nodiscard]] unsigned int GetWidth() const { return Width; }
+	[[nodiscard]] unsigned int GetHeight() const { return Height; }
+
+private:
+	unsigned int ID = 0;
+	unsigned int Width = 0, Height = 0;
+	GLenum Internal_Format = GL_RGB;
+	GLenum Image_Format = GL_RGB;
+	GLenum Wrap_S = GL_REPEAT;
+	GLenum Wrap_T = GL_REPEAT;
+	GLenum Filter_Min = GL_LINEAR;
+	GLenum Filter_Max = GL_LINEAR;
 };
 
-#endif
+#endif // TEXTURE_H

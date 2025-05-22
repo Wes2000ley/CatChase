@@ -1,36 +1,39 @@
+#pragma once
 
-#ifndef game_H
-#define game_H
-
+#include <array>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 // Represents the current state of the game
-enum GameState {
-	GAME_ACTIVE,
-	GAME_MENU,
-	GAME_WIN
+enum class GameState {
+	Active,
+	Menu,
+	Win
 };
 
-// Game holds all game-related state and functionality.
-// Combines all game-related data into a single class for
-// easy access to each of the components and manageability.
+// Game class holds all game-related state and functionality.
 class Game
 {
 public:
-	// game state
-	GameState               State;
-	bool                    Keys[1024];
-	unsigned int            Width, Height;
-	// constructor/destructor
 	Game(unsigned int width, unsigned int height);
 	~Game();
-	// initialize game state (load all shaders/textures/levels)
+
 	void Init();
-	// game loop
 	void ProcessInput(float dt);
 	void Update(float dt);
 	void Render();
-};
 
-#endif
+	// Read-only accessors for encapsulated state
+	[[nodiscard]] unsigned int GetWidth() const { return Width; }
+	[[nodiscard]] unsigned int GetHeight() const { return Height; }
+	[[nodiscard]] GameState GetState() const { return State; }
+
+	// Expose mutable input state safely
+	bool* GetKeys() { return Keys.data(); }
+
+private:
+	GameState State = GameState::Active;
+	std::array<bool, 1024> Keys{}; // zero-initialized
+	unsigned int Width = 0;
+	unsigned int Height = 0;
+};
