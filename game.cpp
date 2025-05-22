@@ -9,7 +9,7 @@
 #include "RESOURCE_MANAGER.h"
 #include "TileMap.h"
 #include "Collision.h"
-const std::unordered_set<int> solidTiles = { 1, 2, 3 };
+const std::unordered_set<int> solidTiles = {126, 127, 128 ,129, 140, 141, 142, 143, 154, 155, 156, 157, 168 ,169 ,170 ,171, 182, 183, 184 ,185, 45, 81,82,83,67,68,69, 137, 138, 151, 152 };
 
 
 
