@@ -1,17 +1,17 @@
-/*******************************************************************
-** This code is part of Breakout.
-**
-** Breakout is free software: you can redistribute it and/or modify
-** it under the terms of the CC BY 4.0 license as published by
-** Creative Commons, either version 4 of the License, or (at your
-** option) any later version.
-******************************************************************/
+
 #include "game.h"
+
+#include <unordered_set>
+
 #include "Dog.h"
 #include "Enemies.h"
 #include "Enemy.h"
 #include "RESOURCE_MANAGER.h"
 #include "TileMap.h"
+#include "Collision.h"
+const std::unordered_set<int> solidTiles = { 1, 2, 3 };
+
+
 
 
 Game::Game(unsigned int width, unsigned int height)
@@ -90,13 +90,26 @@ TileMap_->Load({
 }
 void Game::Update(float dt)
 {
+	dog_->Update(dt, TileMap_);
+
 
 }
 
-void Game::ProcessInput(float dt)
-{
+void Game::ProcessInput(float dt) {
+	glm::vec2 velocity(0.0f);
 
+	if (Keys[GLFW_KEY_W]) velocity.y -= 1.0f;
+	if (Keys[GLFW_KEY_S]) velocity.y += 1.0f;
+	if (Keys[GLFW_KEY_A]) velocity.x -= 1.0f;
+	if (Keys[GLFW_KEY_D]) velocity.x += 1.0f;
+
+	if (glm::length(velocity) > 0.0f)
+		velocity = glm::normalize(velocity);
+
+	if (dog_)
+		dog_->SetVelocity(velocity * 200.0f); // Adjust speed as desired
 }
+
 
 void Game::Render() {
 	float scale = static_cast<float>(Height) / 1080.0f; // or Width / 1920.0f
@@ -106,16 +119,14 @@ void Game::Render() {
 	if (TileMap_)
 		TileMap_->Draw(projection, Width, Height);
 
-	if (dog_)
-	{dog_->Draw(projection, scale);}
-
 	if (slime1_)
 		slime1_->Draw(projection, scale);
 
 	if (skeleton1_)
 		skeleton1_->Draw(projection, scale);
 
-
+	if (dog_)
+	{dog_->Draw(projection, scale);}
 }
 void Game::SetSize(unsigned int width, unsigned int height) {
 	this->Width = width;

@@ -15,6 +15,10 @@ public:
 	void Load(const std::vector<std::vector<int>>& mapData);
 	void Draw(const glm::mat4& projection, float screenWidth, float screenHeight);
 
+	int GetTileWidth() const { return tileWidth_; }
+	int GetTileHeight() const { return tileHeight_; }
+	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
+
 private:
 	Shader shader_;
 	Texture2D tileset_;

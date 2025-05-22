@@ -28,6 +28,7 @@ add_executable(Game
         Enemies.h
         TileMap.cpp
         TileMap.h
+        Collision.h
 )
 
 target_link_libraries(Game
