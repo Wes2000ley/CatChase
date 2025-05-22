@@ -21,6 +21,8 @@ add_executable(Game
         TEXTURE.h
         RESOURCE_MANAGER.cpp
         RESOURCE_MANAGER.h
+        Dog.cpp
+        Dog.h
 )
 
 target_link_libraries(Game

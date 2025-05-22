@@ -1,105 +1,115 @@
+/*******************************************************************
+** This code is part of Breakout.
+**
+** Breakout is free software: you can redistribute it and/or modify
+** it under the terms of the CC BY 4.0 license as published by
+** Creative Commons, either version 4 of the License, or (at your
+** option) any later version.
+******************************************************************/
 #include "resource_manager.h"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <string_view>
 #define STB_IMAGE_IMPLEMENTATION
-#include <memory>
-#include <unordered_map>
-
 #include "stb_image.h"
 
 // Instantiate static variables
-std::unordered_map<std::string, std::unique_ptr<Texture2D>> ResourceManager::Textures;
-std::unordered_map<std::string, std::unique_ptr<Shader>>    ResourceManager::Shaders;
+std::map<std::string, Texture2D>    ResourceManager::Textures;
+std::map<std::string, Shader>       ResourceManager::Shaders;
 
-Shader& ResourceManager::LoadShader(const std::string_view vShaderFile,
-                                    const std::string_view fShaderFile,
-                                    const std::string_view gShaderFile,
-                                    const std::string& name)
+
+Shader& ResourceManager::LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name)
 {
-    auto shader = std::make_unique<Shader>(
-        loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile)
-    );
-    Shader& ref = *shader;
-    Shaders[name] = std::move(shader);
-    return ref;
+    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
+    return Shaders[name];
 }
 
-Shader& ResourceManager::GetShader(const std::string& name)
+Shader ResourceManager::GetShader(std::string name)
 {
-    return *Shaders.at(name);
+    return Shaders[name];
 }
 
-Texture2D& ResourceManager::LoadTexture(const std::string_view file, bool alpha, const std::string& name)
+Texture2D& ResourceManager::LoadTexture(const char *file, bool alpha, std::string name)
 {
-    auto texture = std::make_unique<Texture2D>(
-        loadTextureFromFile(file, alpha)
-    );
-    Texture2D& ref = *texture;
-    Textures[name] = std::move(texture);
-    return ref;
+    Textures[name] = loadTextureFromFile(file, alpha);
+    return Textures[name];
 }
 
-Texture2D& ResourceManager::GetTexture(const std::string& name)
+Texture2D ResourceManager::GetTexture(std::string name)
 {
-    return *Textures.at(name);
+    return Textures[name];
 }
 
 void ResourceManager::Clear()
 {
-    Shaders.clear();   // std::unique_ptr handles deletion
-    Textures.clear();
+    // (properly) delete all shaders
+    for (auto iter : Shaders)
+        glDeleteProgram(iter.second.ID);
+    // (properly) delete all textures
+    for (auto iter : Textures)
+        glDeleteTextures(1, &iter.second.ID);
 }
 
-Shader ResourceManager::loadShaderFromFile(std::string_view vShaderFile,
-                                           std::string_view fShaderFile,
-                                           std::string_view gShaderFile)
+Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
 {
-    std::string vertexCode, fragmentCode, geometryCode;
-
-    try {
-        std::ifstream vertexShaderFileStream{std::string(vShaderFile)};
-        std::ifstream fragmentShaderFileStream{std::string(fShaderFile)};
-
+    // 1. retrieve the vertex/fragment source code from filePath
+    std::string vertexCode;
+    std::string fragmentCode;
+    std::string geometryCode;
+    try
+    {
+        // open files
+        std::ifstream vertexShaderFile(vShaderFile);
+        std::ifstream fragmentShaderFile(fShaderFile);
         std::stringstream vShaderStream, fShaderStream;
-        vShaderStream << vertexShaderFileStream.rdbuf();
-        fShaderStream << fragmentShaderFileStream.rdbuf();
-
+        // read file's buffer contents into streams
+        vShaderStream << vertexShaderFile.rdbuf();
+        fShaderStream << fragmentShaderFile.rdbuf();
+        // close file handlers
+        vertexShaderFile.close();
+        fragmentShaderFile.close();
+        // convert stream into string
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
-
-        if (!gShaderFile.empty()) {
-            std::ifstream geometryShaderFileStream{std::string(gShaderFile)};
+        // if geometry shader path is present, also load a geometry shader
+        if (gShaderFile != nullptr)
+        {
+            std::ifstream geometryShaderFile(gShaderFile);
             std::stringstream gShaderStream;
-            gShaderStream << geometryShaderFileStream.rdbuf();
+            gShaderStream << geometryShaderFile.rdbuf();
+            geometryShaderFile.close();
             geometryCode = gShaderStream.str();
         }
-
-    } catch (const std::exception& e) {
-        std::cerr << "ERROR::SHADER: Failed to read shader files: " << e.what() << "\n";
     }
-
+    catch (std::exception e)
+    {
+        std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
+    }
+    const char *vShaderCode = vertexCode.c_str();
+    const char *fShaderCode = fragmentCode.c_str();
+    const char *gShaderCode = geometryCode.c_str();
+    // 2. now create shader object from source code
     Shader shader;
-    shader.Compile(vertexCode.c_str(), fragmentCode.c_str(), gShaderFile.empty() ? nullptr : geometryCode.c_str());
+    shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
     return shader;
 }
 
-Texture2D ResourceManager::loadTextureFromFile(std::string_view file, bool alpha)
+Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
 {
+    // create texture object
     Texture2D texture;
-    if (alpha) {
-        texture.SetFormat(GL_RGBA, GL_RGBA); // new setter (see below)
+    if (alpha)
+    {
+        texture.Internal_Format = GL_RGBA;
+        texture.Image_Format = GL_RGBA;
     }
-
+    // load image
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(file.data(), &width, &height, &nrChannels, 0);
-    if (data) {
-        texture.Generate(width, height, data);
-        stbi_image_free(data);
-    } else {
-        std::cerr << "Failed to load texture: " << file << "\n";
-    }
+    unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
+    // now generate texture
+    texture.Generate(width, height, data);
+    // and finally free image data
+    stbi_image_free(data);
     return texture;
 }
