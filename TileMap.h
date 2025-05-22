@@ -5,6 +5,7 @@
 #include "texture.h"
 #include <vector>
 #include <glm/glm.hpp>
+#include "text_renderer.h"
 
 class TileMap {
 public:
@@ -19,7 +20,7 @@ public:
 	int GetTileHeight() const { return tileHeight_; }
 	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
 	void DrawDebugGrid(const glm::mat4& projection);
-
+	void SetTextRenderer(TextRenderer* renderer) { textRenderer_ = renderer; }
 
 private:
 	Shader shader_;
@@ -28,6 +29,7 @@ private:
 	int tileWidth_, tileHeight_;
 	std::vector<std::vector<int>> mapData_;
 	int tilesPerRow_, tilesPerCol_;
+	TextRenderer* textRenderer_ = nullptr;
 
 	static unsigned int quadVAO_;
 	void initRenderData() const;

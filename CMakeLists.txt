@@ -8,6 +8,8 @@ find_package(glfw3 REQUIRED)
 find_package(glad REQUIRED)
 find_package(cglm)
 find_package(glm)
+find_package(freetype)
+
 
 
 
@@ -29,6 +31,8 @@ add_executable(Game
         TileMap.cpp
         TileMap.h
         Collision.h
+        TEXT_RENDERER.cpp
+        TEXT_RENDERER.h
 )
 
 target_link_libraries(Game
@@ -37,6 +41,7 @@ target_link_libraries(Game
         glad::glad
         cglm::cglm
         glm::glm
+        Freetype::Freetype
 )
 
 # ✅ Copy resources folder to the build directory

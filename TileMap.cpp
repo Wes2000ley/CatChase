@@ -126,14 +126,31 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
 {
     initGridLines(); // Ensure it's set up
 
-    // Use the custom line shader for drawing the grid
+    // 1. Draw grid lines
     Shader gridShader = ResourceManager::GetShader("grid");
     gridShader.Use();
     gridShader.SetMatrix4("projection", projection);
     gridShader.SetMatrix4("model", glm::mat4(1.0f));
-    gridShader.SetVector3f("lineColor", glm::vec3(0.0f, 0.0f, 0.0f)); // Black
+    gridShader.SetVector3f("lineColor", glm::vec3(0.0f)); // Black
 
     glBindVertexArray(gridVAO_);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(gridLines_.size() / 2));
     glBindVertexArray(0);
+
+    // 2. Draw coordinates inside each tile
+    if (!textRenderer_) return; // Avoid null crash
+
+    Shader textShader = ResourceManager::GetShader("text");
+
+    const int cols = static_cast<int>(mapData_[0].size());
+    const int rows = static_cast<int>(mapData_.size());
+
+    for (int y = 0; y < rows; ++y) {
+        for (int x = 0; x < cols; ++x) {
+            std::string label = std::to_string(x) + "," + std::to_string(y);
+            float xpos = x * tileWidth_ + 2.0f;
+            float ypos = y * tileHeight_ + 12.0f;
+            textRenderer_->RenderText(label, xpos, ypos, 0.25f, glm::vec3(1.0f), projection); // ✅ Use dynamic label
+        }
+    }
 }
