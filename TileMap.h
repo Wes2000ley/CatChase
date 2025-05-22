@@ -18,6 +18,8 @@ public:
 	int GetTileWidth() const { return tileWidth_; }
 	int GetTileHeight() const { return tileHeight_; }
 	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
+	void DrawDebugGrid(const glm::mat4& projection);
+
 
 private:
 	Shader shader_;
@@ -29,6 +31,11 @@ private:
 
 	static unsigned int quadVAO_;
 	void initRenderData() const;
+
+	void initGridLines();
+	mutable unsigned int gridVAO_ = 0;
+	mutable unsigned int gridVBO_ = 0;
+	mutable std::vector<float> gridLines_;
 };
 
 #endif

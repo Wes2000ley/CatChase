@@ -87,3 +87,53 @@ void TileMap::initRenderData() const {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
+
+void TileMap::initGridLines() {
+    if (gridVAO_ != 0) return;  // Already initialized
+
+    int cols = mapData_[0].size();
+    int rows = mapData_.size();
+
+    // Generate grid lines (horizontal and vertical)
+    for (int x = 0; x <= cols; ++x) {
+        float px = x * tileWidth_;
+        gridLines_.push_back(px); gridLines_.push_back(0.0f);
+        gridLines_.push_back(px); gridLines_.push_back(rows * tileHeight_);
+    }
+    for (int y = 0; y <= rows; ++y) {
+        float py = y * tileHeight_;
+        gridLines_.push_back(0.0f); gridLines_.push_back(py);
+        gridLines_.push_back(cols * tileWidth_); gridLines_.push_back(py);
+    }
+
+    // Upload to GPU
+    glGenVertexArrays(1, &gridVAO_);
+    glGenBuffers(1, &gridVBO_);
+
+    glBindVertexArray(gridVAO_);
+    glBindBuffer(GL_ARRAY_BUFFER, gridVBO_);
+    glBufferData(GL_ARRAY_BUFFER, gridLines_.size() * sizeof(float), gridLines_.data(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+void TileMap::DrawDebugGrid(const glm::mat4& projection)
+{
+    initGridLines(); // Ensure it's set up
+
+    // Use the same shader with flat color override
+    shader_.Use();
+    shader_.SetMatrix4("projection", projection);
+    shader_.SetMatrix4("model", glm::mat4(1.0f));
+    shader_.SetVector4f("uvRect", glm::vec4(0, 0, 1, 1)); // dummy
+
+    // Optional: override color via a uniform in shader (if supported)
+    // shader_.SetVector3f("overrideColor", glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glBindVertexArray(gridVAO_);
+    glDrawArrays(GL_LINES, 0, gridLines_.size() / 2);
+    glBindVertexArray(0);
+}

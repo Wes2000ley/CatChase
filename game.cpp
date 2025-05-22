@@ -48,7 +48,7 @@ void Game::Init()
     // Dog
     Texture2D dogTexture = ResourceManager::GetTexture("dog");
     dog_ = new Dog(shader, dogTexture, glm::vec2(50, 50), glm::ivec2(1, 0));
-    dog_->SetScale(1.0f);
+    dog_->SetScale(.5f);
 
     // Slime enemy
     Texture2D slimeTexture = ResourceManager::GetTexture("slime");
@@ -105,7 +105,7 @@ void Game::ProcessInput(float dt)
 		velocity = glm::normalize(velocity);
 
 	if (dog_)
-		dog_->SetVelocity(velocity * 200.0f); // Adjust speed as needed
+		dog_->SetVelocity(velocity * 100.0f); // Adjust speed as needed
 }
 
 void Game::Render()
@@ -121,7 +121,10 @@ void Game::Render()
 	shader.Use();
 	shader.SetMatrix4("projection", projection);
 
-	if (TileMap_)     TileMap_->Draw(projection); // ← No screen scaling
+	if (TileMap_) {
+		TileMap_->Draw(projection);
+		TileMap_->DrawDebugGrid(projection);
+	}
 	if (slime1_)      slime1_->Draw(projection);
 	if (skeleton1_)   skeleton1_->Draw(projection);
 	if (dog_)         dog_->Draw(projection);
