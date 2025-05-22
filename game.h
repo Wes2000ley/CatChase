@@ -14,6 +14,7 @@
 
 #include "Dog.h"
 #include "Enemy.h"
+#include "TileMap.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -42,6 +43,7 @@ public:
 	unsigned int Width, Height;
 
 private:
+	TileMap* TileMap_;
 	Dog* dog_;
 	Enemy* slime1_;
 	Enemy* skeleton1_;

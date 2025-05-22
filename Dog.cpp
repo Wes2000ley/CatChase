@@ -30,8 +30,7 @@ void Dog::Draw(const glm::mat4& projection, float scale)
     );
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
-    const float scales = 10.0f; // set your constant scale factor here
-    model = glm::scale(model, glm::vec3(frameWidth * scale * scales, frameHeight * scale* scales, 1.0f));
+    model = glm::scale(model, glm::vec3(frameWidth * scale *manscale_, frameHeight * scale* manscale_, 1.0f));
 
     shader_.Use();
     shader_.SetMatrix4("model", model);
@@ -81,4 +80,7 @@ void Dog::initRenderData()
     glBindVertexArray(0);
 
     std::cout << "[Dog] quadVAO_ = " << quadVAO_ << "\n";
+}
+void Dog::SetScale(float manscale) {
+    manscale_ = manscale;
 }

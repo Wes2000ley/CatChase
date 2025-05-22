@@ -25,6 +25,9 @@ add_executable(Game
         Dog.h
         Enemy.cpp
         Enemy.h
+        Enemies.h
+        TileMap.cpp
+        TileMap.h
 )
 
 target_link_libraries(Game
