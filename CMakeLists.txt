@@ -13,7 +13,14 @@ find_package(glm)
 
 add_executable(Game
         main.cpp
-        ShaderTest.h
+        game.cpp
+        game.h
+        SHADER.cpp
+        SHADER.h
+        TEXTURE.cpp
+        TEXTURE.h
+        RESOURCE_MANAGER.cpp
+        RESOURCE_MANAGER.h
 )
 
 target_link_libraries(Game
