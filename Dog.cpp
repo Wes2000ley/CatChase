@@ -15,10 +15,10 @@ Dog::Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 fram
 
 void Dog::Draw(const glm::mat4& projection, float scale)
 {
-    constexpr float sheetWidth  = 512.0f;
-    constexpr float sheetHeight = 256.0f;
-    constexpr int frameCols = 24;
-    constexpr int frameRows = 8;
+    constexpr float sheetWidth  = 256.0f;
+    constexpr float sheetHeight = 48.0f;
+    constexpr int frameCols = 16;
+    constexpr int frameRows = 3;
 
     float frameWidth  = sheetWidth  / static_cast<float>(frameCols);
     float frameHeight = sheetHeight / static_cast<float>(frameRows);
@@ -30,7 +30,8 @@ void Dog::Draw(const glm::mat4& projection, float scale)
     );
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
-    model = glm::scale(model, glm::vec3(frameWidth * scale, frameHeight * scale, 1.0f));
+    const float scales = 10.0f; // set your constant scale factor here
+    model = glm::scale(model, glm::vec3(frameWidth * scale * scales, frameHeight * scale* scales, 1.0f));
 
     shader_.Use();
     shader_.SetMatrix4("model", model);
@@ -63,6 +64,7 @@ void Dog::initRenderData()
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(quadVAO_);
+
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);

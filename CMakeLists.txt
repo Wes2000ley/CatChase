@@ -23,6 +23,8 @@ add_executable(Game
         RESOURCE_MANAGER.h
         Dog.cpp
         Dog.h
+        Enemy.cpp
+        Enemy.h
 )
 
 target_link_libraries(Game

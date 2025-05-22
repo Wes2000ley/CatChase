@@ -13,6 +13,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Dog.h"
+#include "Enemy.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -42,6 +43,7 @@ public:
 
 private:
 	Dog* dog_;
+	Enemy* slime1_;
 };
 
 #endif
