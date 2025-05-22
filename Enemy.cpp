@@ -3,6 +3,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "Dog.h"
+#include "Dog.h"
+
 unsigned int Enemy::quadVAO_ = 0;
 
 Enemy::Enemy(Shader& shader, Texture2D& texture,
@@ -17,20 +20,24 @@ Enemy::Enemy(Shader& shader, Texture2D& texture,
         initRenderData();
 }
 
-void Enemy::Draw(const glm::mat4& projection, float scale)
+void Enemy::Draw(const glm::mat4& projection)
 {
-    float frameWidth = sheetWidth_ / frameCols_;
-    float frameHeight = sheetHeight_ / frameRows_;
+    // Frame size from spritesheet
+    float frameWidth  = sheetWidth_  / static_cast<float>(frameCols_);
+    float frameHeight = sheetHeight_ / static_cast<float>(frameRows_);
 
-    glm::vec2 uvSize = glm::vec2(frameWidth / sheetWidth_, frameHeight / sheetHeight_);
+    // Texture coordinates
+    glm::vec2 uvSize   = glm::vec2(frameWidth / sheetWidth_, frameHeight / sheetHeight_);
     glm::vec2 uvOffset = glm::vec2(
         frame_.x * uvSize.x,
         1.0f - (frame_.y + 1) * uvSize.y
     );
 
+    // Transform: internal units (not screen-scaled)
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
-    model = glm::scale(model, glm::vec3(frameWidth * scale * manscale_, frameHeight * scale * manscale_, 1.0f));
+    model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
+    // Render
     shader_.Use();
     shader_.SetMatrix4("model", model);
     shader_.SetMatrix4("projection", projection);
@@ -57,13 +64,14 @@ void Enemy::SetScale(float manscale) {
 void Enemy::initRenderData()
 {
     float vertices[] = {
-        0.0f, 1.0f,  0.0f, 1.0f,
-        1.0f, 0.0f,  1.0f, 0.0f,
-        0.0f, 0.0f,  0.0f, 0.0f,
+        // positions   // tex coords
+        0.0f, 1.0f,    0.0f, 1.0f,
+        1.0f, 0.0f,    1.0f, 0.0f,
+        0.0f, 0.0f,    0.0f, 0.0f,
 
-        0.0f, 1.0f,  0.0f, 1.0f,
-        1.0f, 1.0f,  1.0f, 1.0f,
-        1.0f, 0.0f,  1.0f, 0.0f
+        0.0f, 1.0f,    0.0f, 1.0f,
+        1.0f, 1.0f,    1.0f, 1.0f,
+        1.0f, 0.0f,    1.0f, 0.0f
     };
 
     unsigned int VBO;
@@ -76,7 +84,6 @@ void Enemy::initRenderData()
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 

@@ -12,7 +12,7 @@ public:
 		  float sheetWidth, float sheetHeight,
 		  int frameCols, int frameRows);
 
-	void Draw(const glm::mat4& projection, float scale);
+	void Draw(const glm::mat4 & projection);
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);

@@ -2,6 +2,9 @@
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Dog.h"
+#include "Dog.h"
+
 unsigned int TileMap::quadVAO_ = 0;
 
 TileMap::TileMap(Shader& shader, Texture2D& tileset,
@@ -16,22 +19,20 @@ TileMap::TileMap(Shader& shader, Texture2D& tileset,
     if (quadVAO_ == 0)
         initRenderData();
 }
+
 void TileMap::Load(const std::vector<std::vector<int>>& mapData) {
     mapData_ = mapData;
 }
 
-void TileMap::Draw(const glm::mat4& projection, float screenWidth, float screenHeight)  {
+void TileMap::Draw(const glm::mat4& projection)
+{
     shader_.Use();
     shader_.SetMatrix4("projection", projection);
     tileset_.Bind();
     glBindVertexArray(quadVAO_);
 
-
     int mapCols = mapData_[0].size();
     int mapRows = mapData_.size();
-
-    float scaleX = screenWidth  / (mapCols * tileWidth_);
-    float scaleY = screenHeight / (mapRows * tileHeight_);
 
     glm::vec2 uvSize(1.0f / tilesPerRow_, 1.0f / tilesPerCol_);
 
@@ -39,18 +40,19 @@ void TileMap::Draw(const glm::mat4& projection, float screenWidth, float screenH
         for (int x = 0; x < mapCols; ++x) {
             int tileID = mapData_[y][x];
             if (tileID < 0) continue;
-//top left is tile origin .ex 1
+
             int tu = tileID % tilesPerRow_;
             int tv = tilesPerCol_ - 1 - (tileID / tilesPerRow_);
 
             glm::vec2 uvOffset(tu * uvSize.x, 1.0f - (tv + 1) * uvSize.y);
 
-            glm::vec3 pos(x * tileWidth_ * scaleX, y * tileHeight_ * scaleY, 0.0f);
+            glm::vec3 pos(x * tileWidth_, y * tileHeight_, 0.0f);
             glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-            model = glm::scale(model, glm::vec3(tileWidth_ * scaleX, tileHeight_ * scaleY, 1.0f));
+            model = glm::scale(model, glm::vec3(tileWidth_, tileHeight_, 1.0f));
 
             shader_.SetMatrix4("model", model);
             shader_.SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
+
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
     }

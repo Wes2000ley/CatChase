@@ -9,7 +9,7 @@
 class Dog {
 public:
 	Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 frame);
-	void Draw(const glm::mat4& projection, float scale);
+	void Draw(const glm::mat4 & projection);
 	void SetScale(float manscale);
 
 

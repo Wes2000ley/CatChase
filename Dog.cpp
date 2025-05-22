@@ -1,14 +1,13 @@
 #include "Dog.h"
+#include "Dog.h"
+#include "Dog.h"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <unordered_set>
 #include "Collision.h"
 
-
-// Initialize static member
 unsigned int Dog::quadVAO_ = 0;
-
 
 Dog::Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 frame)
     : shader_(shader), texture_(texture), position_(position), frame_(frame)
@@ -17,7 +16,7 @@ Dog::Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 fram
         initRenderData();
 }
 
-void Dog::Draw(const glm::mat4& projection, float scale)
+void Dog::Draw(const glm::mat4& projection)
 {
     constexpr float sheetWidth  = 256.0f;
     constexpr float sheetHeight = 48.0f;
@@ -34,7 +33,7 @@ void Dog::Draw(const glm::mat4& projection, float scale)
     );
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
-    model = glm::scale(model, glm::vec3(frameWidth * scale * manscale_, frameHeight * scale * manscale_, 1.0f));
+    model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
     shader_.Use();
     shader_.SetMatrix4("model", model);
@@ -56,18 +55,31 @@ void Dog::Update(float dt, TileMap* tileMap)
     int tileWidth = tileMap->GetTileWidth();
     int tileHeight = tileMap->GetTileHeight();
 
-    int tileX = static_cast<int>(newPos.x) / tileWidth;
-    int tileY = static_cast<int>(newPos.y) / tileHeight;
-
     const auto& mapData = tileMap->GetMapData();
 
-    if (tileY >= 0 && tileY < static_cast<int>(mapData.size()) &&
-        tileX >= 0 && tileX < static_cast<int>(mapData[0].size()))
-    {
-        int tileID = mapData[tileY][tileX];
-        if (solidTiles.count(tileID)) {
-            velocity_ = glm::vec2(0.0f);
-            return;
+    // Use bounding box of the dog for better collision
+    float frameWidth  = (256.0f / 16.0f) * manscale_;
+    float frameHeight = (48.0f / 3.0f) * manscale_;
+
+    glm::vec2 topLeft     = newPos;
+    glm::vec2 bottomRight = newPos + glm::vec2(frameWidth, frameHeight);
+
+    int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
+    int tileY1 = static_cast<int>(topLeft.y) / tileHeight;
+    int tileX2 = static_cast<int>(bottomRight.x) / tileWidth;
+    int tileY2 = static_cast<int>(bottomRight.y) / tileHeight;
+
+    for (int y = tileY1; y <= tileY2; ++y) {
+        for (int x = tileX1; x <= tileX2; ++x) {
+            if (y >= 0 && y < static_cast<int>(mapData.size()) &&
+                x >= 0 && x < static_cast<int>(mapData[0].size())) {
+                int tileID = mapData[y][x];
+                if (solidTiles.count(tileID)) {
+                    std::cout << "🧱 COLLISION at (" << x << "," << y << ") ID: " << tileID << "\n";
+                    velocity_ = glm::vec2(0.0f);
+                    return;
+                }
+            }
         }
     }
 

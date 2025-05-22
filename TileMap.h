@@ -13,7 +13,7 @@ public:
 			int tileWidth, int tileHeight);
 
 	void Load(const std::vector<std::vector<int>>& mapData);
-	void Draw(const glm::mat4& projection, float screenWidth, float screenHeight);
+	void Draw(const glm::mat4 & projection);
 
 	int GetTileWidth() const { return tileWidth_; }
 	int GetTileHeight() const { return tileHeight_; }
