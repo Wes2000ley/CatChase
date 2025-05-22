@@ -24,11 +24,13 @@ Game::~Game()
 
 void Game::Init() {
 	// Load shader and texture for dog
-	ResourceManager::LoadShader("resources/shaders/dogsprite.vert", "resources/shaders/dogsprite.frag", nullptr, "sprite");
+	ResourceManager::LoadShader("resources/shaders/sprite.vert", "resources/shaders/sprite.frag", nullptr, "sprite");
 	ResourceManager::LoadTexture("resources/textures/48DogSpriteSheet.png", true, "dog");
 
 	// Load slime texture
 	ResourceManager::LoadTexture("resources/textures/Slime.png", true, "slime");
+
+	ResourceManager::LoadTexture("resources/textures/Skeleton.png", true, "skeleton");
 
 	// Setup shader projection
 	Shader shader = ResourceManager::GetShader("sprite");
@@ -44,6 +46,11 @@ void Game::Init() {
 	Texture2D slimeTexture = ResourceManager::GetTexture("slime");
 	slime1_ = new Enemy(shader, slimeTexture, glm::vec2(500, 500), glm::ivec2(0, 2), 192.0f, 96.0f, 6, 3);
 	slime1_->SetScale(6.0f);
+
+	// Create slime enemy
+	Texture2D skeletonTexture = ResourceManager::GetTexture("skeleton");
+	skeleton1_ = new Enemy(shader, skeletonTexture, glm::vec2(400, 700), glm::ivec2(7, 2), 192.0f, 320.0f, 6, 10);
+	skeleton1_->SetScale(4.0f);
 }
 void Game::Update(float dt)
 {
@@ -64,6 +71,9 @@ void Game::Render() {
 
 	if (slime1_)
 		slime1_->Draw(projection, scale);
+
+	if (skeleton1_)
+		skeleton1_->Draw(projection, scale);
 }
 void Game::SetSize(unsigned int width, unsigned int height) {
 	this->Width = width;

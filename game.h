@@ -44,6 +44,7 @@ public:
 private:
 	Dog* dog_;
 	Enemy* slime1_;
+	Enemy* skeleton1_;
 };
 
 #endif
