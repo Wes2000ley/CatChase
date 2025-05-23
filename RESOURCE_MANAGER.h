@@ -16,6 +16,7 @@
 
 #include "texture.h"
 #include "shader.h"
+#include "TEXT_RENDERER.h"
 
 
 // A static singleton ResourceManager class that hosts several
@@ -39,6 +40,11 @@ public:
     static Texture2D &GetTexture(std::string name);
     // properly de-allocates all loaded resources
     static void      Clear();
+
+static std::map<std::string, TextRenderer> TextRenderers;
+static TextRenderer& LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
+static TextRenderer& GetTextRenderer(const std::string& name);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() { }
@@ -47,5 +53,7 @@ private:
     // loads a single texture from file
     static Texture2D loadTextureFromFile(const char *file, bool alpha);
 };
+
+
 
 #endif

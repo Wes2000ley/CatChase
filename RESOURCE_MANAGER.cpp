@@ -113,3 +113,15 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
     stbi_image_free(data);
     return texture;
 }
+
+std::map<std::string, TextRenderer> ResourceManager::TextRenderers;
+
+TextRenderer& ResourceManager::LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height) {
+    TextRenderers.emplace(name, TextRenderer(width, height)); // ✅ Pass width and height
+    return TextRenderers.at(name);
+}
+
+
+TextRenderer& ResourceManager::GetTextRenderer(const std::string& name) {
+    return TextRenderers.at(name);
+}

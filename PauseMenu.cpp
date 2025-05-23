@@ -23,15 +23,14 @@ void PauseMenu::Render() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 
-	// Use a simple 2D shader for solid quad
 	Shader shader = ResourceManager::GetShader("sprite");
 	shader.Use();
-	shader.SetVector4f("spriteColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.6f)); // black with alpha
+	shader.SetVector4f("spriteColor", glm::vec4(0.0f, 0.0f, 0.0f, 0.6f));
 	shader.SetMatrix4("model", glm::mat4(1.0f));
 	shader.SetInteger("image", 0);
 
-	// Fullscreen quad
 	float w = 1920.0f, h = 1080.0f;
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	float vertices[] = {
 		0.0f, h, 0.0f, 1.0f,
@@ -46,28 +45,29 @@ void PauseMenu::Render() {
 	unsigned int VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 
-	// Draw pause text
-	TextRenderer &text = ResourceManager::GetTextRenderer("default");
+	// Text rendering
+	TextRenderer& text = ResourceManager::GetTextRenderer("default");
+
+	glm::mat4 projection = glm::ortho(0.0f, w, h, 0.0f);
 	float centerX = w / 2.0f;
 	float y = h / 2.0f;
+	float scale = 1.0f;
 
-	text.RenderText("Paused", centerX - 100.0f, y - 150.0f, 1.5f, glm::vec3(1.0f));
+	// Title
+	text.RenderText("Paused", centerX - 100.0f, y - 150.0f, 1.5f, glm::vec3(1.0f), projection);
 
+	// Menu options
 	for (int i = 0; i < COUNT; ++i) {
 		glm::vec3 color = (i == selectedIndex_) ? glm::vec3(1.0f, 1.0f, 0.3f) : glm::vec3(1.0f);
-		text.RenderText(options_[i], centerX - 80.0f, y + i * 40.0f, 1.0f, color);
+		text.RenderText(options_[i], centerX - 80.0f, y + i * 40.0f, scale, color, projection);
 	}
 }

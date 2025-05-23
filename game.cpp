@@ -30,10 +30,10 @@ Game::~Game()
 void Game::Init()
 {
 
+
 	levelManager_.LoadLevel(0, Width, Height);
-
-
-
+	auto& text = ResourceManager::LoadTextRenderer("default", Width, Height);
+	text.Load("resources/fonts/OCRAEXT.TTF", 24); // or your font path
 }
 
 void Game::Update(float dt)

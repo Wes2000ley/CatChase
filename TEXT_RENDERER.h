@@ -44,6 +44,11 @@ public:
 	void Load(std::string font, unsigned int fontSize);
 	// renders a string of text using the precompiled list of characters
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, const glm::mat4& projection);
+
+
+	static TextRenderer& LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
+	static TextRenderer& GetTextRenderer(const std::string& name);
+
 private:
 	// render state
 	unsigned int VAO{}, VBO{};
