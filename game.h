@@ -33,7 +33,7 @@ public:
 	~Game();
 
 	void Init();
-	void ProcessInput(float dt);
+	void ProcessInput(GLFWwindow* window, float dt);
 	void Update(float dt);
 	void Render();
 	void SetSize(unsigned int width, unsigned int height);

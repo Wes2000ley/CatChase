@@ -39,6 +39,8 @@ add_executable(Game
         Level.h
         LevelManager.cpp
         LevelManager.h
+        PauseMenu.cpp
+        PauseMenu.h
 )
 
 target_link_libraries(Game

@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
         // manage user input
         // -----------------
-        CatChase.ProcessInput(deltaTime);
+        CatChase.ProcessInput(window, deltaTime);
 
         // update game state
         // -----------------
