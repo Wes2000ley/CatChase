@@ -23,25 +23,27 @@
   "enemies": [
     {
       "type": "slime",
-      "x": 100,
+      "x": 40,
       "y": 100,
       "frameX": 0,
       "frameY": 2,
       "frameW": 192,
       "frameH": 96,
       "frameCount": 6,
-      "animSpeed": 3
+      "animSpeed": 3,
+      "scale": 0.75
     },
     {
       "type": "skeleton",
-      "x": 159,
-      "y": 150,
+      "x": 346,
+      "y": 105,
       "frameX": 7,
       "frameY": 2,
       "frameW": 192,
       "frameH": 320,
       "frameCount": 6,
-      "animSpeed": 10
+      "animSpeed": 10,
+      "scale": 0.75
     }
   ]
 }

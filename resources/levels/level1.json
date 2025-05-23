@@ -43,7 +43,8 @@
       "frameW": 192,
       "frameH": 320,
       "frameCount": 6,
-      "animSpeed": 10
+      "animSpeed": 10,
+      "scale": 0.75
     },
     {
       "type": "skeleton",
@@ -54,7 +55,8 @@
       "frameW": 192,
       "frameH": 320,
       "frameCount": 6,
-      "animSpeed": 10
+      "animSpeed": 10,
+      "scale": 0.75
     }
   ]
 }

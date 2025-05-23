@@ -70,7 +70,7 @@ TextRenderer* textRenderer = new TextRenderer(width, height);
 	float py = data["player"]["y"];
 	Texture2D dogTexture = ResourceManager::GetTexture("dog");
 	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
-	dog_->SetScale(0.5f);
+	dog_->SetScale(0.7f);
 
 	// Load enemies
 	for (auto& enemyData : data["enemies"]) {
@@ -84,15 +84,25 @@ TextRenderer* textRenderer = new TextRenderer(width, height);
 		int frames = enemyData["frameCount"];
 		int speed = enemyData["animSpeed"];
 
+		float scale = enemyData.contains("scale") ? enemyData["scale"].get<float>() : 1.0f;
+
+		std::unique_ptr<Enemy> enemy;
+
 		if (type == "slime") {
-			enemies.push_back(std::make_unique<SlimeEnemy>(
+			enemy = std::make_unique<SlimeEnemy>(
 				shader, ResourceManager::GetTexture("slime"),
-				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed));
+				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
 		} else if (type == "skeleton") {
-			enemies.push_back(std::make_unique<SkeletonEnemy>(
+			enemy = std::make_unique<SkeletonEnemy>(
 				shader, ResourceManager::GetTexture("skeleton"),
-				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed));
+				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
 		}
+
+		if (enemy) {
+			enemy->SetScale(scale);
+			enemies.push_back(std::move(enemy));
+		}
+
 	}
 
 
