@@ -48,10 +48,14 @@ public:
 
 	static TextRenderer& LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
 	static TextRenderer& GetTextRenderer(const std::string& name);
+	float MeasureTextWidth(const std::string& text, float scale);
 
 private:
 	// render state
 	unsigned int VAO{}, VBO{};
+
 };
+float MeasureTextWidth(const std::string& text, float scale);
+
 
 #endif

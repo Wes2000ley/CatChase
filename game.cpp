@@ -57,21 +57,38 @@ void Game::ProcessInput(GLFWwindow* window, float dt)
 		double mouseX, mouseY;
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 
-		// Handle mouse hover
 		float centerX = Width / 2.0f;
-		float startY = Height / 2.0f;
-		int hovered = -1;
+		TextRenderer& text = ResourceManager::GetTextRenderer("default");
+		float scaleOption = 1.5f;
+
 		for (int i = 0; i < PauseMenu::COUNT; ++i) {
-			float optionY = startY + i * 40.0f;
-			float optionX = centerX - 80.0f;
-			float optionWidth = 160.0f;
-			float optionHeight = 30.0f;
+			std::string label = pauseMenu.GetOptionLabel(i);
+			float optionWidth = text.MeasureTextWidth(label, scaleOption);
+			float optionHeight = 30.0f;  // approximate height
+			float optionX = centerX - optionWidth / 2.0f;
+			float optionY = pauseMenu.GetOptionY(i, Height);
+
 			if (mouseX >= optionX && mouseX <= optionX + optionWidth &&
 				mouseY >= optionY && mouseY <= optionY + optionHeight) {
-				hovered = i;
+				pauseMenu.SetSelectedIndex(i);
 				break;
 				}
 		}
+
+		// Handle mouse hover
+		int hovered = -1;
+
+
+		for (int i = 0; i < PauseMenu::COUNT; ++i) {
+			auto bounds = pauseMenu.GetOptionBounds(i, Width, Height, scaleOption);
+
+			if (mouseX >= bounds.x && mouseX <= bounds.x + bounds.width &&
+				mouseY >= bounds.y && mouseY <= bounds.y + bounds.height) {
+				pauseMenu.SetSelectedIndex(i);
+				break;
+				}
+		}
+
 		if (hovered != -1) pauseMenu.SetSelectedIndex(hovered);
 
 		// Handle mouse click

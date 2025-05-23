@@ -18,7 +18,9 @@ public:
 	};
 
 	PauseMenu();
-
+	struct MenuOptionBounds {
+		float x, y, width, height;
+	};
 	void SetActive(bool active);
 	bool IsActive() const;
 
@@ -26,11 +28,13 @@ public:
 	void Select(std::function<void(Option)> callback);
 	void Render();
 	void SetSelectedIndex(int index);
+	std::string GetOptionLabel(int index) const;
+	float GetOptionY(int index, float screenHeight) const;
+	MenuOptionBounds GetOptionBounds(int index, float screenWidth, float screenHeight, float scale) const;
 
 
 private:
 	bool active_;
 	int selectedIndex_;
 	std::vector<std::string> options_;
-
 };
