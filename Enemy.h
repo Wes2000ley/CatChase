@@ -5,6 +5,8 @@
 #include "texture.h"
 #include <glm/glm.hpp>
 
+#include "TileMap.h"
+
 class Enemy {
 public:
 	Enemy(Shader& shader, Texture2D& texture,
@@ -16,7 +18,7 @@ public:
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);
-
+	virtual void Update(float dt, TileMap* tileMap) = 0;
 private:
 	Shader shader_;
 	Texture2D texture_;

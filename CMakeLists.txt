@@ -33,6 +33,10 @@ add_executable(Game
         Collision.h
         TEXT_RENDERER.cpp
         TEXT_RENDERER.h
+        Level.cpp
+        Level.h
+        LevelManager.cpp
+        LevelManager.h
 )
 
 target_link_libraries(Game

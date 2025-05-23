@@ -46,7 +46,8 @@ void Dog::Draw(const glm::mat4& projection)
     glBindVertexArray(0);
 }
 
-void Dog::Update(float dt, TileMap* tileMap)
+void Dog::Update(float dt, TileMap* tileMap, const std::unordered_set<int>& solidTiles)
+
 {
     if (!tileMap) return;
 

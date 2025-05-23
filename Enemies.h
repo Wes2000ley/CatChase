@@ -17,6 +17,8 @@ public:
 	void Attack() {
 		// shoot bone or play animation
 	}
+	void Update(float dt, TileMap* tileMap){}
+
 };
 
 class SlimeEnemy : public Enemy {
@@ -30,6 +32,8 @@ public:
 	void Attack() {
 		//test
 	}
+	void Update(float dt, TileMap* tileMap){}
+
 };
 
 

@@ -1,6 +1,7 @@
 #ifndef DOG_H
 #define DOG_H
 
+#include <unordered_set>
 #include <glm/glm.hpp>
 #include "shader.h"
 #include "texture.h"
@@ -13,7 +14,7 @@ public:
 	void SetScale(float manscale);
 
 
-	void Update(float dt, TileMap* tileMap);
+	void Update(float dt, TileMap* tileMap, const std::unordered_set<int>& solidTiles);
 
 	void SetVelocity(const glm::vec2& vel) { velocity_ = vel; }
 
