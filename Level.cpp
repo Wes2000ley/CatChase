@@ -6,6 +6,11 @@
 #include "Dog.h"
 #include "RESOURCE_MANAGER.h"
 #include "Enemies.h"
+#include <fstream>
+#include <iostream>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 
 
 Level::Level(): dog_(nullptr) {
@@ -42,58 +47,58 @@ TextRenderer* textRenderer = new TextRenderer(width, height);
 	// Pass the renderer to TileMap
 	tileMap->SetTextRenderer(textRenderer);
 	// Set your level layout data per index (use JSON or hardcoded)
-	if (index == 0) {
-		tileMap->Load({
-    {  45,  13,  13,  14,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  14,  13,  13,  13,  13,  13,  13,  13,  45 },
-    {  13,  13,  13,  14,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  13,  13,  13,  13,  14,  13,  13,  27,  27,  27,  27,  27,  27 },
-    {  13,  13,  13,  14,  13,  13,  13,  13,  13,  13,  13,  13, 126, 127, 128, 129,  13,  13,  27,  27,  27,  27,  14,  27,  13,  13,  13,  13,  13,  27,  27 },
-    {  27,  27,  27,  14,  27,  27,  13,  13,  13,  27,  27,  27, 140, 141, 142, 143,  27,  27,  13,  13,  13,  13,  14,  13,  27,  13,  13,  27,  27,  27,  27 },
-    {  13,  13,  13,  14,  13,  13,  27,  27,  27,  13,  13,  27, 154, 155, 156, 157,  27,  13,  13,  13,  13,  13,  14,  13,  13,  13,  13,  27,  13,  27,  27 },
-    {  27,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27, 168, 169, 170, 171,  13,  13,  27,  27,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27 },
-    {  27,  13,  27,  14,  27,  27,  27,  67,  68,  69,  27,  27, 182, 183, 184, 185,  13,  13,  27,  27,  13,  45,  14,  45,  27,  27,  27,  27,  27,  13,  27 },
-    {   1,   1,   1,  24,   1,   1,   1,  81,  82,  83,   1,   1,   1,  21,  21,   1,   1,   1,   1,   1,   1,   1,  24,   1,   1,   1,   1,   1,   1,   1,   1 },
-    {  27,  27,  13,  14,  27,  27,  27,  27,  13,  13,  13,  13,  27,  27,  27,  27,  27,  27,  27,  27,  13,  45,  14,  45,  27,  13,  13,  27,  27,  13,  27 },
-    {  27,  13,  27,  14,  13,  13,  13,  13,  27,  27,  27,  27,  27,  27,  27,  13,  27,  27,  27,  27,  27,  27,  14,  13,  13,  27,  27,  27,  27,  27,  27 },
-    {  27,  13,  13,  14,  13,  27,  27,  27,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  14,  27,  27,  27,  13,  13,  13,  13,  27 },
-    {  13,  13,  13,  14,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27 },
-    {  27,  27,  27,  14,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  27,  27,  27,  14,  13,  13,  27,  27,  27,  27,  27,  27 },
-    {  27,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  13,  27,  27,  14,  27,  27,  13,  13,  27, 137, 138, 138 },
-    {  27,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  14,  27,  27,  27,  27,  27, 151, 152, 152 },
-    {  13,  13,  13,  14,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  13,  14,  13,  13,  13,  13,  13, 151, 152, 152 },
-    {  45,  27,  27,  14,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  27,  14,  27,  27,  27,  27,  27, 151, 152, 45 },
-});
+	std::string path = "resources/levels/level" + std::to_string(index) + ".json";
+	std::ifstream file(path);
+	if (!file) {
+		std::cerr << "Failed to load " << path << "\n";
+		return;
+	}
+	json data;
+	file >> data;
 
-		this->solidTiles
- = {
-			126, 127, 128 ,129, 140, 141, 142, 143,
-			154, 155, 156, 157, 168 ,169 ,170 ,171,
-			182, 183, 184 ,185, 45, 81, 82, 83,
-			67, 68, 69, 137, 138, 151, 152
-		};
+	// Load tilemap
+	std::vector<std::vector<int>> tileData = data["tilemap"];
+	tileMap->Load(tileData);
 
+	// Load solid tiles
+	for (int tileID : data["solid"]) {
+		solidTiles.insert(tileID);
+	}
 
+	// Load player
+	float px = data["player"]["x"];
+	float py = data["player"]["y"];
+	Texture2D dogTexture = ResourceManager::GetTexture("dog");
+	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
+	dog_->SetScale(0.5f);
 
+	// Load enemies
+	for (auto& enemyData : data["enemies"]) {
+		std::string type = enemyData["type"];
+		float x = enemyData["x"];
+		float y = enemyData["y"];
+		int fx = enemyData["frameX"];
+		int fy = enemyData["frameY"];
+		float fw = enemyData["frameW"];
+		float fh = enemyData["frameH"];
+		int frames = enemyData["frameCount"];
+		int speed = enemyData["animSpeed"];
 
-
-		// Dog
-		Texture2D dogTexture = ResourceManager::GetTexture("dog");
-		dog_ = new Dog(shader, dogTexture, glm::vec2(50, 50), glm::ivec2(1, 0));
-		dog_->SetScale(.5f);
-
-		Texture2D slimeTex = ResourceManager::GetTexture("slime");
-		enemies.push_back(std::make_unique<SlimeEnemy>(
-			shader, slimeTex, glm::vec2(100, 100),
-			glm::ivec2(0, 2), 192.0f, 96.0f, 6, 3));
-
-		Texture2D skeletonTex = ResourceManager::GetTexture("skeleton");
-		enemies.push_back(std::make_unique<SkeletonEnemy>(
-			shader, skeletonTex, glm::vec2(159, 150),
-			glm::ivec2(7, 2), 192.0f, 320.0f, 6, 10));
+		if (type == "slime") {
+			enemies.push_back(std::make_unique<SlimeEnemy>(
+				shader, ResourceManager::GetTexture("slime"),
+				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed));
+		} else if (type == "skeleton") {
+			enemies.push_back(std::make_unique<SkeletonEnemy>(
+				shader, ResourceManager::GetTexture("skeleton"),
+				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed));
+		}
+	}
 
 
 
 	}
-}
+
 
 void Level::Update(float dt) {
 	for (auto& enemy : enemies)

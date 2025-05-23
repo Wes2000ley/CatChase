@@ -9,6 +9,8 @@ find_package(glad REQUIRED)
 find_package(cglm)
 find_package(glm)
 find_package(freetype)
+find_package(nlohmann_json)
+
 
 
 
@@ -46,11 +48,14 @@ target_link_libraries(Game
         cglm::cglm
         glm::glm
         Freetype::Freetype
+        nlohmann_json::nlohmann_json
 )
-
-# ✅ Copy resources folder to the build directory
-add_custom_command(TARGET Game POST_BUILD
+# ✅ Always copy resources folder to build dir
+add_custom_target(copy_resources ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/resources
         ${CMAKE_CURRENT_BINARY_DIR}/resources
+        COMMENT "📁 Copying resources folder..."
 )
+
+add_dependencies(Game copy_resources)

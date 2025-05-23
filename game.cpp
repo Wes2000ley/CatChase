@@ -9,7 +9,7 @@
 #include "TileMap.h"
 #include "Collision.h"
 #include "LevelManager.h"
-#include "Level.h"
+
 
 
 
@@ -25,7 +25,7 @@ Game::~Game()
 
 void Game::Init()
 {
-	levelManager_.LoadLevel(0, Width, Height);
+	levelManager_.LoadLevel(1, Width, Height);
 
 
 

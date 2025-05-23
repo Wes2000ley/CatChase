@@ -11,22 +11,34 @@ TILE_WIDTH = 16
 TILE_HEIGHT = 16
 TEXTURE_WIDTH = 224
 TEXTURE_HEIGHT = 240
-SCALE = 2  # Upscale factor
+SCALE = 2
 
 tiles_per_row = TEXTURE_WIDTH // TILE_WIDTH
 
-# === Load tile data ===
+# === Load JSON data ===
 with open(INPUT_JSON, "r") as f:
     data = json.load(f)
 
-tiles = data["tiles"]
+# === Auto-detect tiles ===
+if "tiles" in data:
+    print("🔍 Detected flat Pixlab format.")
+    tiles = data["tiles"]
+elif "tilesetEditing" in data:
+    try:
+        tiles = data["tilesetEditing"][0]["layers"][0]["tiles"]
+        print("🔍 Detected nested Pixlab project format.")
+    except (KeyError, IndexError):
+        raise RuntimeError("⚠️ Could not locate tile data in tilesetEditing structure.")
+else:
+    raise RuntimeError("❌ Unknown tilemap format.")
 
-# === Build grid ===
+# === Build tile grid ===
 grid = defaultdict(dict)
 max_x = max_y = 0
 
 for key, tile in tiles.items():
-    if not key.strip(): continue
+    if not key.strip():
+        continue
     try:
         gx, gy = map(int, key.split('-'))
         tile_id = tile["y"] * tiles_per_row + tile["x"]
@@ -36,7 +48,7 @@ for key, tile in tiles.items():
     except ValueError:
         print(f"⚠️ Skipping invalid tile key: {key}")
 
-# === Create output image ===
+# === Set up output canvas ===
 output_width = (max_x + 1) * TILE_WIDTH
 output_height = (max_y + 1) * TILE_HEIGHT
 
@@ -44,7 +56,7 @@ tileset_image = Image.open(INPUT_IMAGE).convert("RGBA")
 overlay_image = Image.new("RGBA", (output_width * SCALE, output_height * SCALE))
 draw = ImageDraw.Draw(overlay_image)
 
-# Load font (you can bump this up now!)
+# === Load font ===
 try:
     font = ImageFont.truetype("PressStart2P.ttf", 20)
 except:
@@ -58,7 +70,7 @@ def draw_text_with_outline(draw, position, text, font, fill, outline):
                 draw.text((x + dx, y + dy), text, font=font, fill=outline)
     draw.text(position, text, font=font, fill=fill)
 
-# === Draw tiles and labels ===
+# === Render tile overlay ===
 for y in range(max_y + 1):
     for x in range(max_x + 1):
         tile_id = grid[y].get(x, -1)
@@ -75,15 +87,14 @@ for y in range(max_y + 1):
         tile_region = tile_region.resize((TILE_WIDTH * SCALE, TILE_HEIGHT * SCALE), Image.NEAREST)
         overlay_image.paste(tile_region, (dest_x, dest_y))
 
-        # Draw text centered
-        text = str(tile_id)
-        bbox = draw.textbbox((0, 0), text, font=font)
+        # Draw ID text
+        label = str(tile_id)
+        bbox = draw.textbbox((0, 0), label, font=font)
         text_w = bbox[2] - bbox[0]
         text_h = bbox[3] - bbox[1]
         px = dest_x + (TILE_WIDTH * SCALE - text_w) // 2
         py = dest_y + (TILE_HEIGHT * SCALE - text_h) // 2
-
-        draw_text_with_outline(draw, (px, py), text, font, fill=(255, 255, 255), outline=(0, 0, 0))
+        draw_text_with_outline(draw, (px, py), label, font, fill=(255, 255, 255), outline=(0, 0, 0))
 
 # === Save result ===
 overlay_image.save(OUTPUT_IMAGE)
