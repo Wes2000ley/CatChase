@@ -1,11 +1,3 @@
-/*******************************************************************
-** This code is part of CatChase.
-**
-** CatChase is free software: you can redistribute it and/or modify
-** it under the terms of the CC BY 4.0 license as published by
-** Creative Commons, either version 4 of the License, or (at your
-** option) any later version.
-******************************************************************/
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -13,6 +5,11 @@
 #include "resource_manager.h"
 
 #include <iostream>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <direct.h>
+#endif
 
 // GLFW function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -27,6 +24,16 @@ Game CatChase(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 int main(int argc, char *argv[])
 {
+
+#ifdef _WIN32
+    // ✅ Fix working directory on Windows
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+    std::string exePath(path);
+    exePath = exePath.substr(0, exePath.find_last_of("\\/"));
+    _chdir(exePath.c_str());  // changes process working directory
+#endif
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
