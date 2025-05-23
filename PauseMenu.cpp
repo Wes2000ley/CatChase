@@ -1,4 +1,7 @@
 #include "PauseMenu.h"
+
+#include <functional>
+
 #include "RESOURCE_MANAGER.h"
 #include "TEXT_RENDERER.h"
 
@@ -15,8 +18,17 @@ void PauseMenu::Navigate(int direction) {
 }
 
 void PauseMenu::Select(std::function<void(Option)> callback) {
-    if (callback) callback(static_cast<Option>(selectedIndex_));
+    if (currentMode_ == Mode::MAIN) {
+        if (selectedIndex_ == CHANGE_LEVEL) {
+            currentMode_ = Mode::LEVEL_SELECT;
+            // DO NOT call callback here!
+        } else if (callback) {
+            callback(static_cast<Option>(selectedIndex_));
+        }
+    }
 }
+
+
 
 void PauseMenu::SetSelectedIndex(int index) {
     if (index >= 0 && index < COUNT)
@@ -40,11 +52,11 @@ void PauseMenu::Render() {
     float vertices[] = {
         0.0f, h, 0.0f, 1.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
-        w,    0.0f, 1.0f, 0.0f,
+        w, 0.0f, 1.0f, 0.0f,
 
         0.0f, h, 0.0f, 1.0f,
-        w,    0.0f, 1.0f, 0.0f,
-        w,    h, 1.0f, 1.0f
+        w, 0.0f, 1.0f, 0.0f,
+        w, h, 1.0f, 1.0f
     };
 
     unsigned int VBO, VAO;
@@ -54,12 +66,12 @@ void PauseMenu::Render() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
 
-    TextRenderer& text = ResourceManager::GetTextRenderer("default");
+    TextRenderer &text = ResourceManager::GetTextRenderer("default");
     glm::mat4 projection = glm::ortho(0.0f, w, h, 0.0f);
     float centerX = w / 2.0f;
     float scaleTitle = 2.0f;
@@ -72,17 +84,36 @@ void PauseMenu::Render() {
     text.RenderText(title, titleX, titleY, scaleTitle, glm::vec3(1.0f), projection);
 
     float startY = titleY + 80.0f;
-    for (int i = 0; i < COUNT; ++i) {
-        std::string label = options_[i];
-        float optionWidth = text.MeasureTextWidth(label, scaleOption);
-        float x = centerX - optionWidth / 2.0f;
-        float y = startY + i * 50.0f;
-        glm::vec3 color = (i == selectedIndex_) ? glm::vec3(1.0f, 1.0f, 0.3f) : glm::vec3(1.0f);
-        text.RenderText(label, x, y, scaleOption, color, projection);
+
+    if (currentMode_ == Mode::MAIN) {
+        for (int i = 0; i < COUNT; ++i) {
+            std::string label = options_[i];
+            float optionWidth = text.MeasureTextWidth(label, scaleOption);
+            float x = centerX - optionWidth / 2.0f;
+            float y = startY + i * 50.0f;
+            glm::vec3 color = (i == selectedIndex_) ? glm::vec3(1.0f, 1.0f, 0.3f) : glm::vec3(1.0f);
+            text.RenderText(label, x, y, scaleOption, color, projection);
+        }
+    } else if (currentMode_ == Mode::LEVEL_SELECT) {
+        std::string header = "Select Level:";
+        float headerWidth = text.MeasureTextWidth(header, scaleOption);
+        float headerY = h / 2.0f - 120.0f;
+        text.RenderText(header, centerX - headerWidth / 2.0f, headerY, scaleOption, glm::vec3(1.0f), projection);
+        startY = headerY + 60.0f;
+
+
+        for (int i = 0; i < (int) levelNames_.size(); ++i) {
+            std::string label = levelNames_[i];
+            float optionWidth = text.MeasureTextWidth(label, scaleOption);
+            float x = centerX - optionWidth / 2.0f;
+            float y = startY + i * (scaleOption * 35.0f);
+            glm::vec3 color = (i == selectedLevelIndex_) ? glm::vec3(0.5f, 1.0f, 0.5f) : glm::vec3(1.0f);
+            text.RenderText(label, x, y, scaleOption, color, projection);
+        }
     }
 }
 
-    std::string PauseMenu::GetOptionLabel(int index) const {
+std::string PauseMenu::GetOptionLabel(int index) const {
     if (index >= 0 && index < COUNT)
         return options_[index];
     return "";
@@ -92,6 +123,7 @@ void PauseMenu::Render() {
     float titleY = screenHeight / 2.0f - 120.0f;
     float startY = titleY + 80.0f;
     return startY + index * 50.0f;  // 50 = lineSpacing
+    
 }
 PauseMenu::MenuOptionBounds PauseMenu::GetOptionBounds(int index, float screenWidth, float screenHeight, float scale) const {
     TextRenderer& text = ResourceManager::GetTextRenderer("default");
@@ -107,4 +139,20 @@ PauseMenu::MenuOptionBounds PauseMenu::GetOptionBounds(int index, float screenWi
     y -= optionHeight * 0.7f; // tweak for alignment
 
     return { x, y, optionWidth, optionHeight };
+}
+PauseMenu::MenuOptionBounds PauseMenu::GetLevelBounds(int index, float w, float h, float scale) const {
+    TextRenderer& text = ResourceManager::GetTextRenderer("default");
+    std::string label = levelNames_[index];
+
+    float width = text.MeasureTextWidth(label, scale);
+    float height = 24.0f * scale;
+    float centerX = w / 2.0f;
+    float headerY = h / 2.0f - 120.0f;
+    float y = headerY + 60.0f + index * (scale * 35.0f);
+
+    return { centerX - width / 2.0f, y - height * 0.7f, width, height };
+}
+void PauseMenu::NavigateLevels(int direction) {
+    if (levelNames_.empty()) return;
+    selectedLevelIndex_ = (selectedLevelIndex_ + direction + levelNames_.size()) % levelNames_.size();
 }
