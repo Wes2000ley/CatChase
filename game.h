@@ -16,6 +16,7 @@
 #include "Enemy.h"
 #include "TileMap.h"
 #include "LevelManager.h"
+#include "PauseMenu.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -37,6 +38,8 @@ public:
 	void Update(float dt);
 	void Render();
 	void SetSize(unsigned int width, unsigned int height);
+
+	void HandlePauseMenuSelection(PauseMenu::Option opt, GLFWwindow *window);
 
 
 	GameState State;

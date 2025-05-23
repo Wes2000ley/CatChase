@@ -25,9 +25,12 @@ public:
 	void Navigate(int direction); // -1 or +1
 	void Select(std::function<void(Option)> callback);
 	void Render();
+	void SetSelectedIndex(int index);
+
 
 private:
 	bool active_;
 	int selectedIndex_;
 	std::vector<std::string> options_;
+
 };

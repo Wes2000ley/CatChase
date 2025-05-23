@@ -55,6 +55,11 @@ int main(int argc, char *argv[])
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glfwWindowHint(GLFW_RED_BITS, 8);
+    glfwWindowHint(GLFW_GREEN_BITS, 8);
+    glfwWindowHint(GLFW_BLUE_BITS, 8);
+    glfwWindowHint(GLFW_ALPHA_BITS, 8);
+
 
     // initialize game
     // ---------------
@@ -84,8 +89,9 @@ int main(int argc, char *argv[])
 
         // render
         // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, .1f); // or some visible color
         glClear(GL_COLOR_BUFFER_BIT);
+
         CatChase.Render();
 
         glfwSwapBuffers(window);
