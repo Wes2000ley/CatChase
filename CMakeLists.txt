@@ -62,3 +62,6 @@ add_custom_target(copy_resources ALL
 )
 
 add_dependencies(Game copy_resources)
+if (WIN32)
+    set_target_properties(Game PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
