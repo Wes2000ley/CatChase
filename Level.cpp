@@ -70,7 +70,7 @@ TextRenderer* textRenderer = new TextRenderer(width, height);
 	float py = data["player"]["y"];
 	Texture2D dogTexture = ResourceManager::GetTexture("dog");
 	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
-	dog_->SetScale(0.7f);
+	dog_->SetScale(0.6f);
 
 	// Load enemies
 	for (auto& enemyData : data["enemies"]) {
@@ -119,7 +119,7 @@ dog_->Update(dt, tileMap.get(), solidTiles);
 void Level::Render(const glm::mat4& proj) {
 	if (tileMap) {
 		tileMap->Draw(proj);
-		tileMap->DrawDebugGrid(proj);
+		//tileMap->DrawDebugGrid(proj);
 	}
 	for (auto& enemy : enemies)
 		enemy->Draw(proj);

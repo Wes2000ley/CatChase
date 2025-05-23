@@ -77,13 +77,20 @@ void PauseMenu::Render() {
     float scaleTitle = 2.0f;
     float scaleOption = 1.5f;
 
-    std::string title = "Paused";
-    float titleWidth = text.MeasureTextWidth(title, scaleTitle);
-    float titleX = centerX - titleWidth / 2.0f;
-    float titleY = h / 2.0f - 120.0f;
-    text.RenderText(title, titleX, titleY, scaleTitle, glm::vec3(1.0f), projection);
+    float startY = 0.0f;
 
-    float startY = titleY + 80.0f;
+    if (currentMode_ == Mode::MAIN) {
+        std::string title = "Paused";
+        float titleWidth = text.MeasureTextWidth(title, scaleTitle);
+        float titleX = centerX - titleWidth / 2.0f;
+        float titleY = h / 2.0f - 120.0f;
+        text.RenderText(title, titleX, titleY, scaleTitle, glm::vec3(1.0f), projection);
+
+        startY = titleY + 80.0f;
+    } else if (currentMode_ == Mode::LEVEL_SELECT) {
+        float headerY = h / 2.0f - 120.0f;
+        startY = headerY + 60.0f;
+    }
 
     if (currentMode_ == Mode::MAIN) {
         for (int i = 0; i < COUNT; ++i) {
