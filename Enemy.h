@@ -16,15 +16,18 @@ public:
 		  float sheetWidth, float sheetHeight,
 		  int frameCols, int frameRows);
 
-	~Enemy();
+	virtual ~Enemy(); // Already declared, just make sure it's virtual
 
-	void Draw(const glm::mat4 & projection);
+	virtual void Draw(const glm::mat4 & projection);
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);
-	void Update(float dt, const std::vector<std::unique_ptr<TileMap>> &layers, const std::unordered_set<int> &solidTiles) ;
+	virtual void Update(float dt, const std::vector<std::unique_ptr<TileMap>> &layers, const std::unordered_set<int> &solidTiles) ;
 	glm::vec4 GetBoundingBox() const;
 	glm::vec4 ComputeBoundingBox() const;
+	virtual void Attack() { /* default = do nothing */ }
+	glm::vec2 GetPosition() const { return position_; }
+
 
 private:
 	std::shared_ptr<Shader> shader_;
