@@ -18,7 +18,10 @@ public:
 
 	void Draw(const glm::mat4& projection);
 	void SetScale(float manscale);
-	void Update(float dt, TileMap* tileMap, const std::unordered_set<int>& solidTiles);
+	void Update(float dt,
+					 const std::vector<std::unique_ptr<TileMap>>& layers,
+					 const std::unordered_set<int>& solidTiles,
+					 glm::vec2 screenSize);
 	void SetVelocity(const glm::vec2& vel) { velocity_ = vel; }
 
 private:

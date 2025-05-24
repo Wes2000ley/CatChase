@@ -1,6 +1,4 @@
 #include "Dog.h"
-#include "Dog.h"
-#include "Dog.h"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -9,7 +7,6 @@
 
 unsigned int Dog::quadVAO_ = 0;
 unsigned int Dog::quadVBO_ = 0;
-
 
 Dog::Dog(std::shared_ptr<Shader> shader,
          std::shared_ptr<Texture2D> texture,
@@ -46,31 +43,39 @@ void Dog::Draw(const glm::mat4& projection)
     shader_->SetMatrix4("projection", projection);
     shader_->SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
 
-
     texture_->Bind();
     glBindVertexArray(quadVAO_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
 
-void Dog::Update(float dt, TileMap* tileMap, const std::unordered_set<int>& solidTiles)
-
+void Dog::Update(float dt,
+                 const std::vector<std::unique_ptr<TileMap>>& layers,
+                 const std::unordered_set<int>& solidTiles,
+                 glm::vec2 screenSize)
 {
-    if (!tileMap) return;
-
     glm::vec2 newPos = position_ + velocity_ * dt;
 
-    int tileWidth = tileMap->GetTileWidth();
-    int tileHeight = tileMap->GetTileHeight();
-
-    const auto& mapData = tileMap->GetMapData();
-
-    // Use bounding box of the dog for better collision
     float frameWidth  = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
 
     glm::vec2 topLeft     = newPos;
     glm::vec2 bottomRight = newPos + glm::vec2(frameWidth, frameHeight);
+
+    // === Clamp to screen edges ===
+    if (topLeft.x < 0.0f || topLeft.y < 0.0f ||
+        bottomRight.x > screenSize.x || bottomRight.y > screenSize.y) {
+        std::cout << "📏 Edge collision\n";
+        velocity_ = glm::vec2(0.0f);
+        return;
+        }
+
+    if (layers.empty() || layers[0]->GetMapData().empty())
+        return;
+
+    // Use tile size from first layer (assuming all same dimensions)
+    int tileWidth = layers[0]->GetTileWidth();
+    int tileHeight = layers[0]->GetTileHeight();
 
     int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
     int tileY1 = static_cast<int>(topLeft.y) / tileHeight;
@@ -79,11 +84,15 @@ void Dog::Update(float dt, TileMap* tileMap, const std::unordered_set<int>& soli
 
     for (int y = tileY1; y <= tileY2; ++y) {
         for (int x = tileX1; x <= tileX2; ++x) {
-            if (y >= 0 && y < static_cast<int>(mapData.size()) &&
-                x >= 0 && x < static_cast<int>(mapData[0].size())) {
+            for (size_t i = 0; i < layers.size(); ++i) {
+                const auto& mapData = layers[i]->GetMapData();
+                if (y < 0 || y >= static_cast<int>(mapData.size()) ||
+                    x < 0 || x >= static_cast<int>(mapData[0].size()))
+                    continue;
+
                 int tileID = mapData[y][x];
                 if (solidTiles.count(tileID)) {
-                    std::cout << "🧱 COLLISION at (" << x << "," << y << ") ID: " << tileID << "\n";
+                    std::cout << "🧱 COLLISION at (" << x << "," << y << ") ID: " << tileID << " [layer " << i << "]\n";
                     velocity_ = glm::vec2(0.0f);
                     return;
                 }
@@ -93,6 +102,7 @@ void Dog::Update(float dt, TileMap* tileMap, const std::unordered_set<int>& soli
 
     position_ = newPos;
 }
+
 
 void Dog::SetScale(float manscale) {
     manscale_ = manscale;
@@ -112,7 +122,6 @@ void Dog::initRenderData()
         1.0f, 0.0f,    1.0f, 0.0f
     };
 
-    unsigned int VBO;
     glGenVertexArrays(1, &quadVAO_);
     glGenBuffers(1, &quadVBO_);
 

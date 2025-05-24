@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "Dog.h"
-#include "Dog.h"
 #include "Enemies.h"
 #include "EnemyRegistry.h"
 

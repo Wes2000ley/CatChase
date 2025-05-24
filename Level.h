@@ -33,6 +33,8 @@ void Load(int index, unsigned int width, unsigned int height);
 	float internalHeight = 272.0f;
 	std::unordered_set<std::string> loadedTextureNames;
 	std::unordered_set<std::string> loadedShaderNames;
+	std::vector<std::unique_ptr<TileMap>> tileLayers;
+
 
 
 	glm::mat4 projection_;

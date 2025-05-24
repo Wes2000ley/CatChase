@@ -3,14 +3,14 @@ from collections import defaultdict
 from PIL import Image, ImageDraw, ImageFont
 
 # === CONFIGURATION ===
-INPUT_JSON = "input.json"
-INPUT_IMAGE = "C:\\Users\\Skyri\\CLionProjects\\Game\\resources\\textures\\punyworld-overworld-tileset.png"
-OUTPUT_IMAGE = "overlay_output.png"
+INPUT_JSON = "tilemap_out.json"
+INPUT_IMAGE = "C:\\Users\\Skyri\\CLionProjects\\Game\\resources\\textures\\level2.png"
+OUTPUT_BASE = "overlay_layer"
 
 TILE_WIDTH = 16
 TILE_HEIGHT = 16
-TEXTURE_WIDTH = 224
-TEXTURE_HEIGHT = 240
+TEXTURE_WIDTH = 128
+TEXTURE_HEIGHT = 432
 SCALE = 2
 
 tiles_per_row = TEXTURE_WIDTH // TILE_WIDTH
@@ -19,58 +19,8 @@ tiles_per_row = TEXTURE_WIDTH // TILE_WIDTH
 with open(INPUT_JSON, "r") as f:
     data = json.load(f)
 
-# === Auto-detect tiles ===
-tiles = {}
-
-if "tiles" in data:
-    print("🔍 Detected flat Pixlab format.")
-    tiles = data["tiles"]
-
-elif "tilesetEditing" in data:
-    try:
-        raw_tiles = data["tilesetEditing"][0]["layers"][0]["tiles"]
-        print("🔍 Detected nested Pixlab project format.")
-        tiles = {f"{tile['x']}-{tile['y']}": {"x": tile["x"], "y": tile["y"]} for tile in raw_tiles}
-    except (KeyError, IndexError):
-        raise RuntimeError("⚠️ Could not locate tile data in tilesetEditing structure.")
-
-elif "layers" in data:
-    try:
-        raw_tiles = data["layers"][0]["tiles"]
-        print("🔍 Detected custom layer format.")
-        tiles = {f"{tile['x']}-{tile['y']}": {"id": int(tile["id"]), "x": tile["x"], "y": tile["y"]} for tile in raw_tiles}
-    except (KeyError, IndexError):
-        raise RuntimeError("⚠️ Could not parse layer format.")
-
-else:
-    raise RuntimeError("❌ Unknown tilemap format.")
-
-# === Build tile grid ===
-grid = defaultdict(dict)
-max_x = max_y = 0
-
-for key, tile in tiles.items():
-    if not key.strip():
-        continue
-    try:
-        gx, gy = map(int, key.split('-'))
-        if "id" in tile:
-            tile_id = tile["id"]
-        else:
-            tile_id = tile["y"] * tiles_per_row + tile["x"]
-        grid[gy][gx] = tile_id
-        max_x = max(max_x, gx)
-        max_y = max(max_y, gy)
-    except ValueError:
-        print(f"⚠️ Skipping invalid tile key: {key}")
-
-# === Set up output canvas ===
-output_width = (max_x + 1) * TILE_WIDTH
-output_height = (max_y + 1) * TILE_HEIGHT
-
+# === Load tileset image ===
 tileset_image = Image.open(INPUT_IMAGE).convert("RGBA")
-overlay_image = Image.new("RGBA", (output_width * SCALE, output_height * SCALE))
-draw = ImageDraw.Draw(overlay_image)
 
 # === Load font ===
 try:
@@ -86,32 +36,45 @@ def draw_text_with_outline(draw, position, text, font, fill, outline):
                 draw.text((x + dx, y + dy), text, font=font, fill=outline)
     draw.text(position, text, font=font, fill=fill)
 
-# === Render tile overlay ===
-for y in range(max_y + 1):
-    for x in range(max_x + 1):
-        tile_id = grid[y].get(x, -1)
-        if tile_id == -1:
-            continue
+def render_layer(layer_data, layer_index):
+    max_x = max_y = 0
+    for y, row in enumerate(layer_data):
+        max_x = max(max_x, len(row) - 1)
+        max_y = max(max_y, y)
 
-        tx = (tile_id % tiles_per_row) * TILE_WIDTH
-        ty = (tile_id // tiles_per_row) * TILE_HEIGHT
+    output_width = (max_x + 1) * TILE_WIDTH * SCALE
+    output_height = (max_y + 1) * TILE_HEIGHT * SCALE
+    image = Image.new("RGBA", (output_width, output_height))
+    draw = ImageDraw.Draw(image)
 
-        dest_x = x * TILE_WIDTH * SCALE
-        dest_y = y * TILE_HEIGHT * SCALE
+    for y, row in enumerate(layer_data):
+        for x, tile_id in enumerate(row):
+            if tile_id == -1:
+                continue
 
-        tile_region = tileset_image.crop((tx, ty, tx + TILE_WIDTH, ty + TILE_HEIGHT))
-        tile_region = tile_region.resize((TILE_WIDTH * SCALE, TILE_HEIGHT * SCALE), Image.NEAREST)
-        overlay_image.paste(tile_region, (dest_x, dest_y))
+            tx = (tile_id % tiles_per_row) * TILE_WIDTH
+            ty = (tile_id // tiles_per_row) * TILE_HEIGHT
+            dest_x = x * TILE_WIDTH * SCALE
+            dest_y = y * TILE_HEIGHT * SCALE
 
-        # Draw tile ID
-        label = str(tile_id)
-        bbox = draw.textbbox((0, 0), label, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
-        px = dest_x + (TILE_WIDTH * SCALE - text_w) // 2
-        py = dest_y + (TILE_HEIGHT * SCALE - text_h) // 2
-        draw_text_with_outline(draw, (px, py), label, font, fill=(255, 255, 255), outline=(0, 0, 0))
+            tile = tileset_image.crop((tx, ty, tx + TILE_WIDTH, ty + TILE_HEIGHT))
+            tile = tile.resize((TILE_WIDTH * SCALE, TILE_HEIGHT * SCALE), Image.NEAREST)
+            image.paste(tile, (dest_x, dest_y), tile)
 
-# === Save result ===
-overlay_image.save(OUTPUT_IMAGE)
-print(f"✅ Overlay image saved to {OUTPUT_IMAGE}")
+            label = str(tile_id)
+            bbox = draw.textbbox((0, 0), label, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            px = dest_x + (TILE_WIDTH * SCALE - text_w) // 2
+            py = dest_y + (TILE_HEIGHT * SCALE - text_h) // 2
+            draw_text_with_outline(draw, (px, py), label, font, fill=(255, 255, 255), outline=(0, 0, 0))
+
+    image.save(f"{OUTPUT_BASE}{layer_index}.png")
+    print(f"✅ Saved: {OUTPUT_BASE}{layer_index}.png")
+
+# === Render each layer separately ===
+if "tileLayers" in data:
+    for index, layer in enumerate(data["tileLayers"]):
+        render_layer(layer["tilemap"], index)
+else:
+    raise RuntimeError("❌ Expected 'tileLayers' format in input JSON.")

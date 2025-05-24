@@ -4,7 +4,7 @@
 #include <utility>
 
 
-#include "Dog.h"
+
 #include "Dog.h"
 #include "RESOURCE_MANAGER.h"
 
