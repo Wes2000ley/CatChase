@@ -84,11 +84,11 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	tileMap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
 	// ✅ Text renderer from JSON
-	TextRenderer* textRenderer = new TextRenderer(width, height);
+	auto textRenderer = std::make_shared<TextRenderer>(width, height);
+	tileMap->SetTextRenderer(textRenderer.get());
 	std::string fontPath = data["font"].value("path", "resources/fonts/OCRAEXT.TTF");
 	int fontSize = data["font"].value("size", 15);
 	textRenderer->Load(fontPath, fontSize);
-	tileMap->SetTextRenderer(textRenderer);
 
 	// ✅ Load tilemap and solid tiles
 	tileMap->Load(data["tilemap"]);
