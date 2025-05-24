@@ -117,7 +117,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 		int rows = e["animSpeed"];
 		float scale = e.value("scale", 1.0f);
 
-		auto enemy = EnemyRegistry::Create(type, *shader, *texture, pos, frame, fw, fh, cols, rows);
+		auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
 		if (enemy) {
 			enemy->SetScale(scale);
 			enemies.push_back(std::move(enemy));

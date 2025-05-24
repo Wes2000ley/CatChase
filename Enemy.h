@@ -9,7 +9,7 @@
 
 class Enemy {
 public:
-	Enemy(Shader& shader, Texture2D& texture,
+	Enemy(std::shared_ptr<Shader> shader, std::shared_ptr<Texture2D> texture,
 		  glm::vec2 position, glm::ivec2 frame,
 		  float sheetWidth, float sheetHeight,
 		  int frameCols, int frameRows);
@@ -20,14 +20,18 @@ public:
 	void SetScale(float manscale);
 	virtual void Update(float dt, TileMap* tileMap) = 0;
 private:
-	Shader shader_;
-	Texture2D texture_;
+	std::shared_ptr<Shader> shader_;
+	std::shared_ptr<Texture2D> texture_;
+
 
 
 	static unsigned int quadVAO_;
 	void initRenderData();
+	static unsigned int quadVBO_;
+
 
 protected:
+
 	glm::vec2 position_;
 	glm::ivec2 frame_;
 	float sheetWidth_, sheetHeight_;

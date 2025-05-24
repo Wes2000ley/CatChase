@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <utility>
 
 #include "Dog.h"
 #include "Dog.h"
@@ -9,12 +10,13 @@
 #include "EnemyRegistry.h"
 
 unsigned int Enemy::quadVAO_ = 0;
+unsigned int Enemy::quadVBO_ = 0;
 
-Enemy::Enemy(Shader& shader, Texture2D& texture,
+Enemy::Enemy(std::shared_ptr<Shader> shader, std::shared_ptr<Texture2D> texture,
              glm::vec2 position, glm::ivec2 frame,
              float sheetWidth, float sheetHeight,
              int frameCols, int frameRows)
-    : shader_(shader), texture_(texture), position_(position), frame_(frame),
+    : shader_(std::move(shader)), texture_(std::move(texture)), position_(position), frame_(frame),
       sheetWidth_(sheetWidth), sheetHeight_(sheetHeight),
       frameCols_(frameCols), frameRows_(frameRows)
 {
@@ -40,12 +42,12 @@ void Enemy::Draw(const glm::mat4& projection)
     model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
     // Render
-    shader_.Use();
-    shader_.SetMatrix4("model", model);
-    shader_.SetMatrix4("projection", projection);
-    shader_.SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
+    shader_->Use();
+    shader_->SetMatrix4("model", model);
+    shader_->SetMatrix4("projection", projection);
+    shader_->SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
 
-    texture_.Bind();
+    texture_->Bind();
     glBindVertexArray(quadVAO_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -76,12 +78,12 @@ void Enemy::initRenderData()
         1.0f, 0.0f,    1.0f, 0.0f
     };
 
-    unsigned int VBO;
+
     glGenVertexArrays(1, &quadVAO_);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &quadVBO_);
 
     glBindVertexArray(quadVAO_);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO_);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
