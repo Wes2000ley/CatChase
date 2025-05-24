@@ -37,10 +37,8 @@ public:
 
         float w = (sheetWidth_ / frameCols_) * manscale_;
         float h = (sheetHeight_ / frameRows_) * manscale_;
-        Circle c = {
-            position_ + glm::vec2(w, h) * 0.5f,
-            0.5f * glm::length(glm::vec2(w, h)) * collisionScale_
-        };
+        Circle c = ComputeBoundingCircle();
+
 
         glm::vec2 mapSize = {
             mapDataPtrs[0]->at(0).size() * tileWidth,
@@ -52,11 +50,6 @@ public:
             patrolDirection_ = glm::vec2(0.0f);
         } else {
             position_ = c.center - glm::vec2(w, h) * 0.5f;
-        }
-
-        // 💥 Circular overlap with player
-        if (CircleIntersect(c, playerCircle)) {
-            std::cout << "💥 Slime collided with player!\n";
         }
     }
 
@@ -107,10 +100,8 @@ public:
 
         float w = (sheetWidth_ / frameCols_) * manscale_;
         float h = (sheetHeight_ / frameRows_) * manscale_;
-        Circle c = {
-            position_ + glm::vec2(w, h) * 0.5f,
-            0.5f * glm::length(glm::vec2(w, h)) * collisionScale_
-        };
+        Circle c = ComputeBoundingCircle();
+
 
         glm::vec2 mapSize = {
             mapDataPtrs[0]->at(0).size() * tileWidth,
@@ -124,10 +115,6 @@ public:
             position_ = c.center - glm::vec2(w, h) * 0.5f;
         }
 
-        // 💥 Circular overlap with player
-        if (CircleIntersect(c, playerCircle)) {
-            std::cout << "💥 Skeleton collided with player!\n";
-        }
     }
 
     void Attack() override {

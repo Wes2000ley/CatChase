@@ -163,6 +163,8 @@ void Level::Update(float dt) {
 	for (auto& enemy : enemies) {
 		Circle enemyCircle = enemy->ComputeBoundingCircle();
 		if (!CircleIntersect(playerCircle, enemyCircle)) continue;
+		std::cout << "💥 Player collided with enemy!\n";
+
 
 		glm::vec2 pushDir = glm::normalize(playerCircle.center - enemyCircle.center);
 		glm::vec2 newCenter = playerCircle.center + pushDir * 2.0f;
