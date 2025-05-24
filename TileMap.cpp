@@ -22,6 +22,7 @@ TileMap::TileMap(Shader& shader, Texture2D& tileset,
         initRenderData();
 }
 
+
 void TileMap::Load(const std::vector<std::vector<int>>& mapData) {
     mapData_ = mapData;
 }

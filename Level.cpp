@@ -19,9 +19,20 @@ Level::Level(): dog_(nullptr) {
 Level::~Level() { Unload(); }
 
 void Level::Unload() {
-	tileMap.reset();
+	for (const auto& name : loadedTextureNames)
+		ResourceManager::UnloadTexture(name);
+	for (const auto& name : loadedShaderNames)
+		ResourceManager::UnloadShader(name);
+
+	loadedTextureNames.clear();
+	loadedShaderNames.clear();
 	enemies.clear();
 	solidTiles.clear();
+	tileMap.reset();
+	if (dog_) {
+		delete dog_;
+		dog_ = nullptr;
+	}
 }
 void Level::Load(int index, unsigned int width, unsigned int height) {
 	Unload();
@@ -51,12 +62,15 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 			nullptr,
 			name.c_str()
 		);
+		loadedShaderNames.insert(name);
 	}
 
 	// ✅ Load all textures
 	for (auto& [name, path] : data["resources"]["textures"].items()) {
-		ResourceManager::LoadTexture(path.get<std::string>().c_str(), true, name.c_str());
+		ResourceManager::LoadTexture(path.get<std::string>().c_str(), true, name);
+		loadedTextureNames.insert(name);
 	}
+
 
 	// ✅ Use loaded shader + tilemap texture
 	Shader shader = ResourceManager::GetShader("sprite");

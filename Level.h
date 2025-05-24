@@ -31,6 +31,9 @@ void Load(int index, unsigned int width, unsigned int height);
 	Dog* dog_;
 	float internalWidth = 496.0f;
 	float internalHeight = 272.0f;
+	std::unordered_set<std::string> loadedTextureNames;
+	std::unordered_set<std::string> loadedShaderNames;
+
 
 	glm::mat4 projection_;
 

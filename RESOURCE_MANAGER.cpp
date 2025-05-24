@@ -12,28 +12,41 @@
 #include <sstream>
 #include <fstream>
 #define STB_IMAGE_IMPLEMENTATION
+#include <unordered_map>
+
 #include "stb_image.h"
 
 // Instantiate static variables
 std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
 
+static std::unordered_map<std::string, std::string> texturePaths;
 
-Shader& ResourceManager::LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name)
-{
+Texture2D& ResourceManager::LoadTexture(const char* file, bool alpha, std::string name) {
+    std::string newPath = file;
+
+    // Only reload if the path changed
+    if (Textures.find(name) != Textures.end()) {
+        if (texturePaths[name] == newPath)
+            return Textures[name]; // same file, skip reload
+    }
+
+    texturePaths[name] = newPath;
+    Textures[name] = loadTextureFromFile(file, alpha);
+    return Textures[name];
+}
+
+
+Shader& ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, std::string name) {
     Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
     return Shaders[name];
 }
 
+
+
 Shader ResourceManager::GetShader(std::string name)
 {
     return Shaders[name];
-}
-
-Texture2D& ResourceManager::LoadTexture(const char *file, bool alpha, std::string name)
-{
-    Textures[name] = loadTextureFromFile(file, alpha);
-    return Textures[name];
 }
 
 Texture2D &ResourceManager::GetTexture(std::string name)
@@ -124,4 +137,18 @@ TextRenderer& ResourceManager::LoadTextRenderer(const std::string& name, unsigne
 
 TextRenderer& ResourceManager::GetTextRenderer(const std::string& name) {
     return TextRenderers.at(name);
+}
+
+void ResourceManager::UnloadTexture(const std::string& name) {
+    if (Textures.count(name)) {
+        glDeleteTextures(1, &Textures[name].ID);
+        Textures.erase(name);
+    }
+}
+
+void ResourceManager::UnloadShader(const std::string& name) {
+    if (Shaders.count(name)) {
+        glDeleteProgram(Shaders[name].ID);
+        Shaders.erase(name);
+    }
 }
