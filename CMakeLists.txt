@@ -65,3 +65,11 @@ add_dependencies(Game copy_resources)
 if (WIN32)
     set_target_properties(Game PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
+# 🗜️ Compress Game.exe and resources into GamePackage.zip using cmake -E tar
+add_custom_command(
+        TARGET Game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "📦 Compressing GamePackage.zip..."
+        COMMAND ${CMAKE_COMMAND} -E tar cfv CatChase.zip --format=zip Game.exe resources
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "📦 Creating GamePackage.zip"
+)
