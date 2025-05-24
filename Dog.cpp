@@ -8,9 +8,15 @@
 #include "Collision.h"
 
 unsigned int Dog::quadVAO_ = 0;
+unsigned int Dog::quadVBO_ = 0;
 
-Dog::Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 frame)
-    : shader_(shader), texture_(texture), position_(position), frame_(frame)
+
+Dog::Dog(std::shared_ptr<Shader> shader,
+         std::shared_ptr<Texture2D> texture,
+         glm::vec2 position,
+         glm::ivec2 frame)
+    : shader_(std::move(shader)), texture_(std::move(texture)),
+      position_(position), frame_(frame)
 {
     if (quadVAO_ == 0)
         initRenderData();
@@ -35,12 +41,13 @@ void Dog::Draw(const glm::mat4& projection)
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
     model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
-    shader_.Use();
-    shader_.SetMatrix4("model", model);
-    shader_.SetMatrix4("projection", projection);
-    shader_.SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
+    shader_->Use();
+    shader_->SetMatrix4("model", model);
+    shader_->SetMatrix4("projection", projection);
+    shader_->SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
 
-    texture_.Bind();
+
+    texture_->Bind();
     glBindVertexArray(quadVAO_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -107,10 +114,10 @@ void Dog::initRenderData()
 
     unsigned int VBO;
     glGenVertexArrays(1, &quadVAO_);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &quadVBO_);
 
     glBindVertexArray(quadVAO_);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO_);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);

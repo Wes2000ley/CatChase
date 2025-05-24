@@ -7,21 +7,24 @@
 #include "texture.h"
 #include "TileMap.h"
 
+#include <memory>
+
 class Dog {
 public:
-	Dog(Shader& shader, Texture2D& texture, glm::vec2 position, glm::ivec2 frame);
-	void Draw(const glm::mat4 & projection);
+	Dog(std::shared_ptr<Shader> shader,
+		std::shared_ptr<Texture2D> texture,
+		glm::vec2 position,
+		glm::ivec2 frame);
+
+	void Draw(const glm::mat4& projection);
 	void SetScale(float manscale);
-
-
 	void Update(float dt, TileMap* tileMap, const std::unordered_set<int>& solidTiles);
-
 	void SetVelocity(const glm::vec2& vel) { velocity_ = vel; }
 
-
 private:
-	Shader shader_;
-	Texture2D texture_;
+	std::shared_ptr<Shader> shader_;
+	std::shared_ptr<Texture2D> texture_;
+
 	glm::vec2 position_;
 	glm::ivec2 frame_;
 	float manscale_ = 1.0f;
@@ -29,8 +32,10 @@ private:
 	float speed_ = 150.0f;
 
 	static unsigned int quadVAO_;
+	static unsigned int quadVBO_;
 	void initRenderData();
 };
+
 
 
 

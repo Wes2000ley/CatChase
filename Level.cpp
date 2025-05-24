@@ -73,7 +73,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 
 	// ✅ Use loaded shader + tilemap texture
-	Shader shader = ResourceManager::GetShader("sprite");
+	auto shader = std::make_shared<Shader>(ResourceManager::GetShader("sprite"));
 	Texture2D tileTex = ResourceManager::GetTexture("tilemap");
 
 	// ✅ TileMap setup
@@ -81,7 +81,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	int tileHeight = data["tileSize"].value("height", 16);
 	int mapWidth = data["levelSize"].value("width", 224);
 	int mapHeight = data["levelSize"].value("height", 240);
-	tileMap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
+	tileMap = std::make_unique<TileMap>(*shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
 	// ✅ Text renderer from JSON
 	TextRenderer* textRenderer = new TextRenderer(width, height);
@@ -99,7 +99,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	float px = playerData["x"];
 	float py = playerData["y"];
 	float pscale = playerData.value("scale", 0.6f);
-	Texture2D dogTexture = ResourceManager::GetTexture("dog");
+	auto dogTexture = std::make_shared<Texture2D>(ResourceManager::GetTexture("dog"));
 	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
 	dog_->SetScale(pscale);
 
