@@ -9,6 +9,18 @@
 
 #include <memory>
 
+enum class Direction8 {
+	Right = 0,
+	DownRight = 1,
+	Down = 2,
+	DownLeft = 3,
+	Left = 4,
+	UpLeft = 5,
+	Up = 6,
+	UpRight = 7
+};
+
+
 class Dog {
 public:
 	Dog(std::shared_ptr<Shader> shader,
@@ -22,11 +34,11 @@ public:
 					 const std::vector<std::unique_ptr<TileMap>>& layers,
 					 const std::unordered_set<int>& solidTiles,
 					 glm::vec2 screenSize);
-	void SetVelocity(const glm::vec2& vel) { velocity_ = vel; }
 	glm::vec4 GetBoundingBox() const;
 	glm::vec2 GetPosition() const;
 	void SetPosition(const glm::vec2& pos);
 	glm::vec4 ComputeBoundingBox() const;
+	void SetVelocity(glm::vec2 v);
 
 
 private:
@@ -39,6 +51,10 @@ private:
 	glm::vec2 velocity_ = glm::vec2(0.0f);
 	float speed_ = 150.0f;
 	glm::vec4 boundingBox_;
+	Direction8 facingDirection_ = Direction8::Down;
+
+
+
 
 	static unsigned int quadVAO_;
 	static unsigned int quadVBO_;

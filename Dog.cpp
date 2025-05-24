@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <unordered_set>
+#include <array>
 #include "Collision.h"
 
 unsigned int Dog::quadVAO_ = 0;
@@ -18,26 +19,36 @@ Dog::Dog(std::shared_ptr<Shader> shader,
     if (quadVAO_ == 0)
         initRenderData();
 
-    boundingBox_ = ComputeBoundingBox(); // initialize box
+    boundingBox_ = ComputeBoundingBox();
 }
 
 void Dog::Draw(const glm::mat4& projection)
 {
-    constexpr float sheetWidth  = 256.0f;
+    constexpr float sheetWidth = 256.0f;
     constexpr float sheetHeight = 48.0f;
     constexpr int frameCols = 16;
     constexpr int frameRows = 3;
 
-    float frameWidth  = sheetWidth  / static_cast<float>(frameCols);
-    float frameHeight = sheetHeight / static_cast<float>(frameRows);
+    float frameWidth = sheetWidth / frameCols;
+    float frameHeight = sheetHeight / frameRows;
 
-    glm::vec2 uvSize = glm::vec2(frameWidth / sheetWidth, frameHeight / sheetHeight);
-    glm::vec2 uvOffset = glm::vec2(
+    glm::vec2 uvSize = { frameWidth / sheetWidth, frameHeight / sheetHeight };
+    glm::vec2 uvOffset = {
         frame_.x * uvSize.x,
         1.0f - (frame_.y + 1) * uvSize.y
-    );
+    };
+
+    //float baseOffsetDeg = 90.0f; // ✅ Use this if your sprite faces up
+    // float baseOffsetDeg = 0.0f;  // Use this if it faces right
+    // float baseOffsetDeg = 180.0f; // Use if it faces left
+     float baseOffsetDeg = 270.0f; // Use if it faces down
+
+    float angleDeg = static_cast<float>(facingDirection_) * 45.0f + baseOffsetDeg;    float angleRad = glm::radians(angleDeg);
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
+    model = glm::translate(model, glm::vec3(0.5f * frameWidth * manscale_, 0.5f * frameHeight * manscale_, 0.0f));
+    model = glm::rotate(model, angleRad, glm::vec3(0, 0, 1));
+    model = glm::translate(model, glm::vec3(-0.5f * frameWidth * manscale_, -0.5f * frameHeight * manscale_, 0.0f));
     model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
     shader_->Use();
@@ -58,15 +69,14 @@ void Dog::Update(float dt,
 {
     glm::vec2 newPos = position_ + velocity_ * dt;
 
-    float frameWidth  = (256.0f / 16.0f) * manscale_;
+    float frameWidth = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
-    glm::vec2 topLeft     = newPos;
+
+    glm::vec2 topLeft = newPos;
     glm::vec2 bottomRight = newPos + glm::vec2(frameWidth, frameHeight);
 
-    // Edge bounds
-    if (topLeft.x < 0.0f || topLeft.y < 0.0f ||
+    if (topLeft.x < 0 || topLeft.y < 0 ||
         bottomRight.x > screenSize.x || bottomRight.y > screenSize.y) {
-        std::cout << "📏 Edge collision\n";
         velocity_ = glm::vec2(0.0f);
         return;
     }
@@ -74,7 +84,7 @@ void Dog::Update(float dt,
     if (layers.empty() || layers[0]->GetMapData().empty())
         return;
 
-    int tileWidth  = layers[0]->GetTileWidth();
+    int tileWidth = layers[0]->GetTileWidth();
     int tileHeight = layers[0]->GetTileHeight();
 
     int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
@@ -84,15 +94,13 @@ void Dog::Update(float dt,
 
     for (int y = tileY1; y <= tileY2; ++y) {
         for (int x = tileX1; x <= tileX2; ++x) {
-            for (size_t i = 0; i < layers.size(); ++i) {
-                const auto& mapData = layers[i]->GetMapData();
+            for (const auto& layer : layers) {
+                const auto& mapData = layer->GetMapData();
                 if (y < 0 || y >= static_cast<int>(mapData.size()) ||
                     x < 0 || x >= static_cast<int>(mapData[0].size()))
                     continue;
 
-                int tileID = mapData[y][x];
-                if (solidTiles.count(tileID)) {
-                    std::cout << "🧱 COLLISION at (" << x << "," << y << ") ID: " << tileID << " [layer " << i << "]\n";
+                if (solidTiles.count(mapData[y][x])) {
                     velocity_ = glm::vec2(0.0f);
                     return;
                 }
@@ -100,16 +108,14 @@ void Dog::Update(float dt,
         }
     }
 
-    // ✅ Apply position and update bounding box
     position_ = newPos;
     boundingBox_ = ComputeBoundingBox();
 }
 
 glm::vec4 Dog::ComputeBoundingBox() const {
-    float frameWidth  = (256.0f / 16.0f) * manscale_;
+    float frameWidth = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
-    glm::vec2 bottomRight = position_ + glm::vec2(frameWidth, frameHeight);
-    return glm::vec4(position_.x, position_.y, bottomRight.x, bottomRight.y);
+    return { position_.x, position_.y, position_.x + frameWidth, position_.y + frameHeight };
 }
 
 glm::vec4 Dog::GetBoundingBox() const {
@@ -122,25 +128,34 @@ glm::vec2 Dog::GetPosition() const {
 
 void Dog::SetPosition(const glm::vec2& pos) {
     position_ = pos;
-    boundingBox_ = ComputeBoundingBox(); // keep updated
+    boundingBox_ = ComputeBoundingBox();
 }
 
-void Dog::SetScale(float manscale) {
-    manscale_ = manscale;
+void Dog::SetScale(float scale) {
+    manscale_ = scale;
+}
+
+void Dog::SetVelocity(glm::vec2 v) {
+    velocity_ = v;
+
+    if (v == glm::vec2(0.0f))
+        return;
+
+    float angle = glm::degrees(std::atan2(v.y, v.x));
+    if (angle < 0) angle += 360.0f;
+
+    facingDirection_ = static_cast<Direction8>(static_cast<int>((angle + 22.5f) / 45.0f) % 8);
 }
 
 void Dog::initRenderData()
 {
-    std::cout << "[Dog] Initializing VAO/VBO...\n";
-
-    float vertices[] = {
-        0.0f, 1.0f,    0.0f, 1.0f,
-        1.0f, 0.0f,    1.0f, 0.0f,
-        0.0f, 0.0f,    0.0f, 0.0f,
-
-        0.0f, 1.0f,    0.0f, 1.0f,
-        1.0f, 1.0f,    1.0f, 1.0f,
-        1.0f, 0.0f,    1.0f, 0.0f
+    constexpr float vertices[] = {
+        0.0f, 1.0f,  0.0f, 1.0f,
+        1.0f, 0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f,  0.0f, 1.0f,
+        1.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 0.0f,  1.0f, 0.0f
     };
 
     glGenVertexArrays(1, &quadVAO_);
@@ -157,6 +172,4 @@ void Dog::initRenderData()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    std::cout << "[Dog] quadVAO_ = " << quadVAO_ << "\n";
 }
