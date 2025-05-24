@@ -94,3 +94,4 @@ void Enemy::initRenderData()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
+Enemy::~Enemy() = default; // no OpenGL cleanup here

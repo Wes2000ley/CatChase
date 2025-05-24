@@ -27,13 +27,15 @@ Game::~Game()
 {
 }
 
-void Game::Init()
-{
-
+void Game::Init() {
     ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
+
+
+    // Global TextRenderer
+    auto text = ResourceManager::LoadTextRenderer("default", Width, Height);
+    text->Load("resources/fonts/OCRAEXT.TTF", 20); // or your font
+    // Load level 0
     levelManager_.LoadLevel(0, Width, Height);
-    const auto& text = ResourceManager::LoadTextRenderer("default", Width, Height);
-    text->Load("resources/fonts/OCRAEXT.TTF", 24); // or your font path
     pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
 }
 

@@ -29,7 +29,6 @@ void Level::Unload() {
 	enemies.clear();
 	solidTiles.clear();
 	tileMap.reset();
-	if (tileMap) tileMap->Destroy();
 	if (dog_) {
 		dog_.reset();
 	}
@@ -84,11 +83,9 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	tileMap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
 	// ✅ Text renderer from JSON
-	auto textRenderer = std::make_shared<TextRenderer>(width, height);
-	tileMap->SetTextRenderer(textRenderer);  // full ownership passed
-	std::string fontPath = data["font"].value("path", "resources/fonts/OCRAEXT.TTF");
-	int fontSize = data["font"].value("size", 15);
-	textRenderer->Load(fontPath, fontSize);
+	auto sharedText = ResourceManager::GetTextRendererPtr("default");
+	tileMap->SetTextRenderer(sharedText);
+
 
 	// ✅ Load tilemap and solid tiles
 	tileMap->Load(data["tilemap"]);
@@ -138,7 +135,7 @@ dog_->Update(dt, tileMap.get(), solidTiles);
 void Level::Render(const glm::mat4& proj) {
 	if (tileMap) {
 		tileMap->Draw(proj);
-		//tileMap->DrawDebugGrid(proj);
+		tileMap->DrawDebugGrid(proj);
 	}
 	for (auto& enemy : enemies)
 		enemy->Draw(proj);

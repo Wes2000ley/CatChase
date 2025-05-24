@@ -42,6 +42,8 @@ static TextRenderer& GetTextRenderer(const std::string& name);
     static void UnloadTexture(const std::string& name);
     static void UnloadShader(const std::string& name);
 
+    static std::shared_ptr<TextRenderer> GetTextRendererPtr(const std::string& name);
+
 private:
     // private constructor, that is we do not want any actual resource manager objects. Its members and functions should be publicly available (static).
     ResourceManager() { }
