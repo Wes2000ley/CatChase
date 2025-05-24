@@ -1,81 +1,84 @@
-// Collision.h
 #ifndef COLLISION_H
 #define COLLISION_H
 
 #include <unordered_set>
 #include <glm/glm.hpp>
 #include <vector>
+#include <algorithm>
 
-
+// Make sure this exists
 extern const std::unordered_set<int> solidTiles;
 
-#pragma once
-#include <glm/glm.hpp>
-#include <unordered_set>
-#include <vector>
+struct Circle {
+    glm::vec2 center;
+    float radius;
+};
 
-// Shared collision helper
-inline bool IsBoxBlocked(
-	const glm::vec4& box,
-	const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
-	int tileWidth, int tileHeight,
-	const std::unordered_set<int>& solidTiles)
+// ⛔ Check if circle overlaps any solid tile
+inline bool IsCircleBlocked(
+    const Circle& circle,
+    const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
+    int tileWidth, int tileHeight,
+    const std::unordered_set<int>& solidTiles)
 {
-	int tileX1 = static_cast<int>(box.x) / tileWidth;
-	int tileY1 = static_cast<int>(box.y) / tileHeight;
-	int tileX2 = static_cast<int>(box.z) / tileWidth;
-	int tileY2 = static_cast<int>(box.w) / tileHeight;
+    int minX = static_cast<int>((circle.center.x - circle.radius) / tileWidth);
+    int maxX = static_cast<int>((circle.center.x + circle.radius) / tileWidth);
+    int minY = static_cast<int>((circle.center.y - circle.radius) / tileHeight);
+    int maxY = static_cast<int>((circle.center.y + circle.radius) / tileHeight);
 
-	for (int y = tileY1; y <= tileY2; ++y) {
-		for (int x = tileX1; x <= tileX2; ++x) {
-			for (const auto* mapData : mapDataPtrs) {
-				if (!mapData || y < 0 || x < 0 ||
-					y >= static_cast<int>(mapData->size()) ||
-					x >= static_cast<int>((*mapData)[0].size())) continue;
+    for (int y = minY; y <= maxY; ++y) {
+        for (int x = minX; x <= maxX; ++x) {
+            for (const auto* mapData : mapDataPtrs) {
+                if (!mapData || y < 0 || x < 0 ||
+                    y >= static_cast<int>(mapData->size()) ||
+                    x >= static_cast<int>((*mapData)[0].size())) continue;
 
-				int tileID = (*mapData)[y][x];
-				if (solidTiles.count(tileID)) {
-					return true;
-				}
-			}
-		}
-	}
-	return false;
+                int tileID = (*mapData)[y][x];
+                if (solidTiles.count(tileID)) {
+                    // Get tile bounds
+                    glm::vec2 tilePos = glm::vec2(x * tileWidth, y * tileHeight);
+                    glm::vec2 tileSize = glm::vec2(tileWidth, tileHeight);
+                    glm::vec2 closest = glm::clamp(circle.center, tilePos, tilePos + tileSize);
+
+                    float dist = glm::distance(circle.center, closest);
+                    if (dist < circle.radius) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
-inline bool TryMove(glm::vec2& pos,
-			 const glm::vec2& velocity,
-			 float dt,
-			 float width,
-			 float height,
-			 const glm::vec2& bounds,
-			 const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
-			 const std::unordered_set<int>& solidTiles,
-			 int tileWidth,
-			 int tileHeight)
+
+// 🚶‍♂️ Circle move + tile blocking
+inline bool TryMoveCircle(
+    Circle& circle,
+    const glm::vec2& velocity,
+    float dt,
+    glm::vec2 bounds,
+    const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
+    const std::unordered_set<int>& solidTiles,
+    int tileWidth, int tileHeight)
 {
-	glm::vec2 newPos = pos + velocity * dt;
+    Circle moved = circle;
+    moved.center += velocity * dt;
 
-	// ✅ Clamp to bounds (screen or tilemap)
-	newPos.x = glm::clamp(newPos.x, 0.0f, bounds.x - width);
-	newPos.y = glm::clamp(newPos.y, 0.0f, bounds.y - height);
+    // Clamp to screen/map bounds
+    moved.center.x = glm::clamp(moved.center.x, moved.radius, bounds.x - moved.radius);
+    moved.center.y = glm::clamp(moved.center.y, moved.radius, bounds.y - moved.radius);
 
-	glm::vec4 futureBox = {
-		newPos.x,
-		newPos.y,
-		newPos.x + width,
-		newPos.y + height
-	};
+    if (!IsCircleBlocked(moved, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
+        circle = moved;
+        return true;
+    }
 
-	if (!IsBoxBlocked(futureBox, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
-		pos = newPos;
-		return true; // success
-	}
-
-	return false; // blocked
+    return false;
 }
 
-inline bool AABBIntersect(const glm::vec4& a, const glm::vec4& b) {
-	return a.x < b.z && a.z > b.x && a.y < b.w && a.w > b.y;
+// Circle overlap test
+inline bool CircleIntersect(const Circle& a, const Circle& b) {
+    return glm::distance(a.center, b.center) < (a.radius + b.radius);
 }
 
-#endif
+#endif // COLLISION_H

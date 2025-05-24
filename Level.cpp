@@ -130,79 +130,46 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 
 void Level::Update(float dt) {
-	// 📦 Cache map pointers
 	std::vector<const std::vector<std::vector<int>>*> mapDataPtrs;
 	for (const auto& layer : tileLayers)
 		mapDataPtrs.push_back(&layer->GetMapData());
 
-	if (tileLayers.empty()) return; // safety guard
-
-	int tileWidth  = tileLayers[0]->GetTileWidth();
+	int tileWidth = tileLayers[0]->GetTileWidth();
 	int tileHeight = tileLayers[0]->GetTileHeight();
+	glm::vec2 screenSize = { internalWidth, internalHeight };
 
-	// 🐶 Save initial dog state
-	const glm::vec2 oldDogPos = dog_->GetPosition();
-	const glm::vec4 initialPlayerBounds = dog_->GetBoundingBox();
+	// 🌀 Get player's current circle
+	Circle playerCircle = dog_->ComputeBoundingCircle();
 
-	// 👾 Update enemies with initial player bounds
-	for (auto& enemy : enemies)
-		enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, initialPlayerBounds);
+	// 👾 Update enemies
+	for (auto& enemy : enemies) {
+		enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, playerCircle);
+	}
 
-	// 🐕 Update player movement
-	dog_->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, glm::vec2(internalWidth, internalHeight));
-	glm::vec4 playerBox = dog_->GetBoundingBox();
+	// 🐕 Update player
+	dog_->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, screenSize);
+	playerCircle = dog_->ComputeBoundingCircle();
 
-	// 🧱 Handle dog-enemy collisions
-	for (const auto& enemy : enemies) {
-		if (!enemy) continue;
+	// 💥 Resolve player <-> enemy overlap
+	for (auto& enemy : enemies) {
+		Circle enemyCircle = enemy->ComputeBoundingCircle();
+		if (!CircleIntersect(playerCircle, enemyCircle)) continue;
 
-		const glm::vec4 enemyBox = enemy->GetBoundingBox();
-		if (!AABBIntersect(playerBox, enemyBox)) continue;
+		glm::vec2 pushDir = glm::normalize(playerCircle.center - enemyCircle.center);
+		glm::vec2 newCenter = playerCircle.center + pushDir * 2.0f;
 
-		constexpr int maxPushAttempts = 4;
-		int pushes = 0;
+		Circle pushed = playerCircle;
+		pushed.center = newCenter;
 
-		while (AABBIntersect(playerBox, enemyBox) && pushes++ < maxPushAttempts) {
-			const glm::vec2 enemyCenter = {
-				(enemyBox.x + enemyBox.z) * 0.5f,
-				(enemyBox.y + enemyBox.w) * 0.5f
-			};
-
-			const glm::vec2 dogCenter = {
-				(playerBox.x + playerBox.z) * 0.5f,
-				(playerBox.y + playerBox.w) * 0.5f
-			};
-
-			glm::vec2 pushDir = dogCenter - enemyCenter;
-			if (glm::length(pushDir) == 0.0f) break;
-
-			pushDir = glm::normalize(pushDir);
-			const float pushStep = 1.0f;
-			glm::vec2 newPos = dog_->GetPosition() + pushDir * pushStep;
-
-			const float dogW = playerBox.z - playerBox.x;
-			const float dogH = playerBox.w - playerBox.y;
-
-			newPos.x = std::clamp(newPos.x, 0.0f, internalWidth  - dogW);
-			newPos.y = std::clamp(newPos.y, 0.0f, internalHeight - dogH);
-
-			const glm::vec4 testBox = {
-				newPos.x, newPos.y,
-				newPos.x + dogW, newPos.y + dogH
-			};
-
-			if (!IsBoxBlocked(testBox, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
-				dog_->SetPosition(newPos);
-				playerBox = testBox;
-			} else {
-				break; // wall or solid tile hit
-			}
+		if (!IsCircleBlocked(pushed, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
+			dog_->SetPosition(pushed.center - glm::vec2((256.0f / 16.0f) * 0.5f, (48.0f / 3.0f) * 0.5f) * dog_->GetScale());
+		} else {
+			dog_->SetVelocity(glm::vec2(0.0f));
 		}
-
-		// Reset dog velocity after resolving overlap
-		dog_->SetVelocity(glm::vec2(0.0f));
 	}
 }
+
+
 
 
 void Level::Render(const glm::mat4& proj) {

@@ -25,7 +25,6 @@ Enemy::Enemy(std::shared_ptr<Shader> shader,
     if (quadVAO_ == 0)
         initRenderData();
 
-    boundingBox_ = ComputeBoundingBox(); // initial
 }
 
 void Enemy::Draw(const glm::mat4& projection)
@@ -54,44 +53,22 @@ void Enemy::Draw(const glm::mat4& projection)
 }
 
 void Enemy::Update(float dt,
-                   const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
-                   const std::unordered_set<int>& solidTiles,
-                   int tileWidth, int tileHeight,
-                   const glm::vec4& playerBounds)
-{
-    glm::vec2 newPos = position_ + velocity_ * dt;
-
-    float frameWidth  = (sheetWidth_ / frameCols_) * manscale_;
+                   const std::vector<const std::vector<std::vector<int> > *> &mapDataPtrs,
+                   const std::unordered_set<int> &solidTiles,
+                   int tileWidth, int tileHeight, const Circle &playerCircle) {
+    float frameWidth = (sheetWidth_ / frameCols_) * manscale_;
     float frameHeight = (sheetHeight_ / frameRows_) * manscale_;
+    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight));
+    Circle c = {position_ + glm::vec2(frameWidth, frameHeight) * 0.5f, radius};
 
-    glm::vec4 futureBox = {
-        newPos.x,
-        newPos.y,
-        newPos.x + frameWidth,
-        newPos.y + frameHeight
-    };
-
-    // Use shared collision util
-    if (!IsBoxBlocked(futureBox, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
-        position_ = newPos;
-        boundingBox_ = ComputeBoundingBox();
-    } else {
+    if (!TryMoveCircle(c, velocity_, dt, {0, 0}, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
         velocity_ = glm::vec2(0.0f);
     }
 
-    // Optional: Enemy <-> player interaction here
+    // Back from center to top-left
+    position_ = c.center - glm::vec2(frameWidth, frameHeight) * 0.5f;
 }
 
-
-glm::vec4 Enemy::ComputeBoundingBox() const {
-    float width  = (sheetWidth_ / frameCols_) * manscale_;
-    float height = (sheetHeight_ / frameRows_) * manscale_;
-    return glm::vec4(position_.x, position_.y, position_.x + width, position_.y + height);
-}
-
-glm::vec4 Enemy::GetBoundingBox() const {
-    return boundingBox_;
-}
 
 void Enemy::SetFrame(glm::ivec2 frame) {
     frame_ = frame;
@@ -99,12 +76,10 @@ void Enemy::SetFrame(glm::ivec2 frame) {
 
 void Enemy::SetPosition(glm::vec2 position) {
     position_ = position;
-    boundingBox_ = ComputeBoundingBox();
 }
 
 void Enemy::SetScale(float manscale) {
     manscale_ = manscale;
-    boundingBox_ = ComputeBoundingBox();
 }
 
 void Enemy::initRenderData()
@@ -133,6 +108,13 @@ void Enemy::initRenderData()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+Circle Enemy::ComputeBoundingCircle() const {
+    float width  = (sheetWidth_ / frameCols_) * manscale_;
+    float height = (sheetHeight_ / frameRows_) * manscale_;
+    float radius = 0.5f * glm::length(glm::vec2(width, height));
+    glm::vec2 center = position_ + glm::vec2(width, height) * 0.5f;
+    return { center, radius };
 }
 
 Enemy::~Enemy() = default;

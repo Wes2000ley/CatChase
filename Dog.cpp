@@ -19,7 +19,6 @@ Dog::Dog(std::shared_ptr<Shader> shader,
     if (quadVAO_ == 0)
         initRenderData();
 
-    boundingBox_ = ComputeBoundingBox();
 }
 
 void Dog::Draw(const glm::mat4& projection)
@@ -63,6 +62,15 @@ void Dog::Draw(const glm::mat4& projection)
 }
 
 
+// Dog.cpp
+Circle Dog::ComputeBoundingCircle() const {
+    float frameWidth = (256.0f / 16.0f) * manscale_;
+    float frameHeight = (48.0f / 3.0f) * manscale_;
+    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight));
+    glm::vec2 center = position_ + glm::vec2(frameWidth, frameHeight) * 0.5f;
+    return { center, radius };
+}
+
 void Dog::Update(
     float dt,
     const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
@@ -71,27 +79,24 @@ void Dog::Update(
     int tileHeight,
     glm::vec2 screenSize)
 {
-    float frameWidth  = (256.0f / 16.0f) * manscale_;
-    float frameHeight = (48.0f / 3.0f) * manscale_;
+    float frameW = (256.0f / 16.0f) * manscale_;
+    float frameH = (48.0f / 3.0f) * manscale_;
+    float radius = 0.5f * glm::length(glm::vec2(frameW, frameH));
+    Circle c = { position_ + glm::vec2(frameW, frameH) * 0.5f, radius };
 
-    if (!TryMove(position_, velocity_, dt, frameWidth, frameHeight, screenSize, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
+    if (!TryMoveCircle(c, velocity_, dt, screenSize, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
         velocity_ = glm::vec2(0.0f);
     }
 
-    boundingBox_ = ComputeBoundingBox();
+    // Back from center to top-left
+    position_ = c.center - glm::vec2(frameW, frameH) * 0.5f;
 }
 
 
 
-glm::vec4 Dog::ComputeBoundingBox() const {
-    float frameWidth = (256.0f / 16.0f) * manscale_;
-    float frameHeight = (48.0f / 3.0f) * manscale_;
-    return { position_.x, position_.y, position_.x + frameWidth, position_.y + frameHeight };
-}
 
-glm::vec4 Dog::GetBoundingBox() const {
-    return boundingBox_;
-}
+
+
 
 glm::vec2 Dog::GetPosition() const {
     return position_;
@@ -99,7 +104,6 @@ glm::vec2 Dog::GetPosition() const {
 
 void Dog::SetPosition(const glm::vec2& pos) {
     position_ = pos;
-    boundingBox_ = ComputeBoundingBox();
 }
 
 void Dog::SetScale(float scale) {

@@ -9,6 +9,8 @@
 
 #include <memory>
 
+#include "Collision.h"
+
 enum class Direction8 {
 	Right = 0,
 	DownRight = 1,
@@ -29,6 +31,10 @@ public:
 		glm::ivec2 frame);
 
 	void Draw(const glm::mat4& projection);
+
+	Circle ComputeBoundingCircle() const;
+	float GetScale() const { return manscale_; }
+
 	void SetScale(float manscale);
 	void Update(
 	float dt,
@@ -38,10 +44,8 @@ public:
 	int tileHeight,
 	glm::vec2 screenSize);
 
-	glm::vec4 GetBoundingBox() const;
 	glm::vec2 GetPosition() const;
 	void SetPosition(const glm::vec2& pos);
-	glm::vec4 ComputeBoundingBox() const;
 	void SetVelocity(glm::vec2 v);
 
 
@@ -54,8 +58,8 @@ private:
 	float manscale_ = 1.0f;
 	glm::vec2 velocity_ = glm::vec2(0.0f);
 	float speed_ = 150.0f;
-	glm::vec4 boundingBox_;
 	Direction8 facingDirection_ = Direction8::Down;
+	Circle boundingCircle_;
 
 
 
