@@ -30,8 +30,7 @@ void Level::Unload() {
 	solidTiles.clear();
 	tileMap.reset();
 	if (dog_) {
-		delete dog_;
-		dog_ = nullptr;
+		dog_.reset();
 	}
 }
 void Level::Load(int index, unsigned int width, unsigned int height) {
@@ -100,7 +99,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	float py = playerData["y"];
 	float pscale = playerData.value("scale", 0.6f);
 	auto dogTexture = ResourceManager::GetTexture("dog");
-	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
+	dog_ = std::make_unique<Dog>(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
 	dog_->SetScale(pscale);
 
 	// ✅ Enemies

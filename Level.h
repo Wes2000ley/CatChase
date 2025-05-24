@@ -28,7 +28,7 @@ void Load(int index, unsigned int width, unsigned int height);
 	std::unique_ptr<TileMap> tileMap;
 	std::vector<std::unique_ptr<Enemy>> enemies;
 	std::unordered_set<int> solidTiles;
-	Dog* dog_;
+	std::unique_ptr<Dog> dog_;
 	float internalWidth = 496.0f;
 	float internalHeight = 272.0f;
 	std::unordered_set<std::string> loadedTextureNames;
