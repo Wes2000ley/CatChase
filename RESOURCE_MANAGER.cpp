@@ -12,6 +12,7 @@
 #include <sstream>
 #include <fstream>
 #define STB_IMAGE_IMPLEMENTATION
+#include <memory>
 #include <unordered_map>
 
 #include "stb_image.h"
@@ -128,16 +129,20 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
     return texture;
 }
 
-std::map<std::string, TextRenderer> ResourceManager::TextRenderers;
+std::map<std::string, std::shared_ptr<TextRenderer>> ResourceManager::TextRenderers;
 
-TextRenderer& ResourceManager::LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height) {
-    TextRenderers.emplace(name, TextRenderer(width, height)); // ✅ Pass width and height
-    return TextRenderers.at(name);
+// ✅ GOOD
+std::shared_ptr<TextRenderer> ResourceManager::LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height) {
+    auto renderer = std::make_shared<TextRenderer>(width, height);
+    TextRenderers[name] = renderer;
+    return renderer;
 }
 
 
+
+
 TextRenderer& ResourceManager::GetTextRenderer(const std::string& name) {
-    return TextRenderers.at(name);
+    return *TextRenderers.at(name);
 }
 
 void ResourceManager::UnloadTexture(const std::string& name) {

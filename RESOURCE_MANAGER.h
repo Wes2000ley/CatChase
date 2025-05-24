@@ -3,6 +3,7 @@
 #define RESOURCE_MANAGER_H
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include <glad/glad.h>
@@ -34,8 +35,8 @@ public:
     // properly de-allocates all loaded resources
     static void      Clear();
 
-static std::map<std::string, TextRenderer> TextRenderers;
-static TextRenderer& LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
+static std::map<std::string, std::shared_ptr<TextRenderer>> TextRenderers;
+    static std::shared_ptr<TextRenderer> LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
 static TextRenderer& GetTextRenderer(const std::string& name);
     static void UnloadTexture(const std::string& name);
     static void UnloadShader(const std::string& name);

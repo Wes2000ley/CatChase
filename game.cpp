@@ -30,11 +30,11 @@ Game::~Game()
 void Game::Init()
 {
 
-	ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
-	levelManager_.LoadLevel(0, Width, Height);
-	auto& text = ResourceManager::LoadTextRenderer("default", Width, Height);
-	text.Load("resources/fonts/OCRAEXT.TTF", 24); // or your font path
-	pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
+    ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
+    levelManager_.LoadLevel(0, Width, Height);
+    std::shared_ptr<TextRenderer> text = ResourceManager::LoadTextRenderer("default", Width, Height);
+    text->Load("resources/fonts/OCRAEXT.TTF", 24); // or your font path
+    pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
 }
 
 void Game::Update(float dt)
