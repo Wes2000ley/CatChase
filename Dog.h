@@ -30,10 +30,14 @@ public:
 
 	void Draw(const glm::mat4& projection);
 	void SetScale(float manscale);
-	void Update(float dt,
-					 const std::vector<std::unique_ptr<TileMap>>& layers,
-					 const std::unordered_set<int>& solidTiles,
-					 glm::vec2 screenSize);
+	void Update(
+	float dt,
+	const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
+	const std::unordered_set<int>& solidTiles,
+	int tileWidth,
+	int tileHeight,
+	glm::vec2 screenSize);
+
 	glm::vec4 GetBoundingBox() const;
 	glm::vec2 GetPosition() const;
 	void SetPosition(const glm::vec2& pos);

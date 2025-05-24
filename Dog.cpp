@@ -62,55 +62,26 @@ void Dog::Draw(const glm::mat4& projection)
     glBindVertexArray(0);
 }
 
-void Dog::Update(float dt,
-                 const std::vector<std::unique_ptr<TileMap>>& layers,
-                 const std::unordered_set<int>& solidTiles,
-                 glm::vec2 screenSize)
-{
-    glm::vec2 newPos = position_ + velocity_ * dt;
 
-    float frameWidth = (256.0f / 16.0f) * manscale_;
+void Dog::Update(
+    float dt,
+    const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
+    const std::unordered_set<int>& solidTiles,
+    int tileWidth,
+    int tileHeight,
+    glm::vec2 screenSize)
+{
+    float frameWidth  = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
 
-    glm::vec2 topLeft = newPos;
-    glm::vec2 bottomRight = newPos + glm::vec2(frameWidth, frameHeight);
-
-    if (topLeft.x < 0 || topLeft.y < 0 ||
-        bottomRight.x > screenSize.x || bottomRight.y > screenSize.y) {
+    if (!TryMove(position_, velocity_, dt, frameWidth, frameHeight, screenSize, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
         velocity_ = glm::vec2(0.0f);
-        return;
     }
 
-    if (layers.empty() || layers[0]->GetMapData().empty())
-        return;
-
-    int tileWidth = layers[0]->GetTileWidth();
-    int tileHeight = layers[0]->GetTileHeight();
-
-    int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
-    int tileY1 = static_cast<int>(topLeft.y) / tileHeight;
-    int tileX2 = static_cast<int>(bottomRight.x) / tileWidth;
-    int tileY2 = static_cast<int>(bottomRight.y) / tileHeight;
-
-    for (int y = tileY1; y <= tileY2; ++y) {
-        for (int x = tileX1; x <= tileX2; ++x) {
-            for (const auto& layer : layers) {
-                const auto& mapData = layer->GetMapData();
-                if (y < 0 || y >= static_cast<int>(mapData.size()) ||
-                    x < 0 || x >= static_cast<int>(mapData[0].size()))
-                    continue;
-
-                if (solidTiles.count(mapData[y][x])) {
-                    velocity_ = glm::vec2(0.0f);
-                    return;
-                }
-            }
-        }
-    }
-
-    position_ = newPos;
     boundingBox_ = ComputeBoundingBox();
 }
+
+
 
 glm::vec4 Dog::ComputeBoundingBox() const {
     float frameWidth = (256.0f / 16.0f) * manscale_;

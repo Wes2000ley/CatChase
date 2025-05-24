@@ -22,10 +22,11 @@ public:
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);
-	virtual void Update(float dt,
-						const std::vector<std::unique_ptr<TileMap>>& layers,
-						const std::unordered_set<int>& solidTiles,
-						const glm::vec4& playerBounds);
+	virtual    void Update(float dt,
+			const std::vector<const std::vector<std::vector<int>>*>& mapDataPtrs,
+			const std::unordered_set<int>& solidTiles,
+			int tileWidth, int tileHeight,
+			const glm::vec4& playerBounds);
 	glm::vec4 GetBoundingBox() const;
 	glm::vec4 ComputeBoundingBox() const;
 	virtual void Attack() { /* default = do nothing */ }
@@ -35,7 +36,7 @@ public:
 private:
 	std::shared_ptr<Shader> shader_;
 	std::shared_ptr<Texture2D> texture_;
-	glm::vec4 boundingBox_;
+
 
 
 
@@ -52,6 +53,7 @@ protected:
 	int frameCols_, frameRows_;
 	float manscale_ = 1.0f;
 	glm::vec2 velocity_ = glm::vec2(0.0f);
+	glm::vec4 boundingBox_;
 
 };
 

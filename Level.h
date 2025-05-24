@@ -24,7 +24,6 @@ void Load(int index, unsigned int width, unsigned int height);
 	float GetInternalHeight() const { return internalHeight; }
 
 
-
 	std::unique_ptr<TileMap> tileMap;
 	std::vector<std::unique_ptr<Enemy>> enemies;
 	std::unordered_set<int> solidTiles;
