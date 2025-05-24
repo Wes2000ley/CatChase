@@ -37,7 +37,10 @@ public:
 
         float w = (sheetWidth_ / frameCols_) * manscale_;
         float h = (sheetHeight_ / frameRows_) * manscale_;
-        Circle c = { position_ + glm::vec2(w, h) * 0.5f, 0.5f * glm::length(glm::vec2(w, h)) };
+        Circle c = {
+            position_ + glm::vec2(w, h) * 0.5f,
+            0.5f * glm::length(glm::vec2(w, h)) * collisionScale_
+        };
 
         glm::vec2 mapSize = {
             mapDataPtrs[0]->at(0).size() * tileWidth,
@@ -104,7 +107,10 @@ public:
 
         float w = (sheetWidth_ / frameCols_) * manscale_;
         float h = (sheetHeight_ / frameRows_) * manscale_;
-        Circle c = { position_ + glm::vec2(w, h) * 0.5f, 0.5f * glm::length(glm::vec2(w, h)) };
+        Circle c = {
+            position_ + glm::vec2(w, h) * 0.5f,
+            0.5f * glm::length(glm::vec2(w, h)) * collisionScale_
+        };
 
         glm::vec2 mapSize = {
             mapDataPtrs[0]->at(0).size() * tileWidth,

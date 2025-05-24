@@ -101,9 +101,12 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
     float px = playerData["x"];
     float py = playerData["y"];
     float pscale = playerData.value("scale", 0.6f);
+	float pcollscale = playerData.value("collisionScale", 1.0f);
     auto dogTex = ResourceManager::GetTexture("dog");
     dog_ = std::make_unique<Dog>(shader, dogTex, glm::vec2(px, py), glm::ivec2(1, 0));
     dog_->SetScale(pscale);
+	dog_->SetCollisionScale(pcollscale);
+
 
     // ✅ Enemies
     for (const auto& e : data["enemies"]) {
@@ -118,10 +121,13 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
         int cols = e["frameCount"];
         int rows = e["animSpeed"];
         float scale = e.value("scale", 1.0f);
+    	float collscale = e.value("collisionScale", 1.0f);
 
         auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
         if (enemy) {
             enemy->SetScale(scale);
+        	enemy->SetCollisionScale(collscale);
+
             enemies.push_back(std::move(enemy));
         } else {
             std::cerr << "❌ Unknown enemy type: " << type << "\n";

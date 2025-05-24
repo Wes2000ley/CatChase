@@ -66,7 +66,7 @@ void Dog::Draw(const glm::mat4& projection)
 Circle Dog::ComputeBoundingCircle() const {
     float frameWidth = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
-    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight));
+    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight)) * collisionScale_;
     glm::vec2 center = position_ + glm::vec2(frameWidth, frameHeight) * 0.5f;
     return { center, radius };
 }
@@ -81,8 +81,9 @@ void Dog::Update(
 {
     float frameW = (256.0f / 16.0f) * manscale_;
     float frameH = (48.0f / 3.0f) * manscale_;
-    float radius = 0.5f * glm::length(glm::vec2(frameW, frameH));
+    float radius = 0.5f * glm::length(glm::vec2(frameW, frameH)) * collisionScale_;
     Circle c = { position_ + glm::vec2(frameW, frameH) * 0.5f, radius };
+
 
     if (!TryMoveCircle(c, velocity_, dt, screenSize, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
         velocity_ = glm::vec2(0.0f);
@@ -147,4 +148,7 @@ void Dog::initRenderData()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+}
+void Dog::SetCollisionScale(float scale) {
+    collisionScale_ = scale;
 }

@@ -29,7 +29,8 @@
   "player": {
     "x": 50,
     "y": 50,
-    "scale": 0.6
+    "scale": 0.6,
+    "collisionScale": 0.7
   },
   "internalWidth": 496,
   "internalHeight": 272,
@@ -57,6 +58,7 @@
       "frameCount": 6,
       "animSpeed": 3,
       "scale": 0.75,
+      "collisionScale": 0.7,
       "texture": "slime",
       "shader": "sprite"
     },
@@ -71,6 +73,7 @@
       "frameCount": 6,
       "animSpeed": 10,
       "scale": 0.75,
+      "collisionScale": 0.1,
       "texture": "skeleton",
       "shader": "sprite"
     }

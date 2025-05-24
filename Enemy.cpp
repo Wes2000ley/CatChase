@@ -58,8 +58,11 @@ void Enemy::Update(float dt,
                    int tileWidth, int tileHeight, const Circle &playerCircle) {
     float frameWidth = (sheetWidth_ / frameCols_) * manscale_;
     float frameHeight = (sheetHeight_ / frameRows_) * manscale_;
-    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight));
-    Circle c = {position_ + glm::vec2(frameWidth, frameHeight) * 0.5f, radius};
+    float radius = 0.5f * glm::length(glm::vec2(frameWidth, frameHeight)) * collisionScale_;
+Circle c = {
+        position_ + glm::vec2(frameWidth, frameHeight) * 0.5f,
+        0.5f * glm::length(glm::vec2(frameWidth, frameHeight)) * collisionScale_
+    };
 
     if (!TryMoveCircle(c, velocity_, dt, {0, 0}, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
         velocity_ = glm::vec2(0.0f);

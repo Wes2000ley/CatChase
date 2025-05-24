@@ -47,6 +47,7 @@ public:
 	glm::vec2 GetPosition() const;
 	void SetPosition(const glm::vec2& pos);
 	void SetVelocity(glm::vec2 v);
+	void SetCollisionScale(float scale);
 
 
 private:
@@ -56,6 +57,7 @@ private:
 	glm::vec2 position_;
 	glm::ivec2 frame_;
 	float manscale_ = 1.0f;
+	float collisionScale_ = 1.0f;
 	glm::vec2 velocity_ = glm::vec2(0.0f);
 	float speed_ = 150.0f;
 	Direction8 facingDirection_ = Direction8::Down;

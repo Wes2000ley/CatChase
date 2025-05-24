@@ -31,6 +31,7 @@ public:
 	virtual void Attack() { /* default = do nothing */ }
 	glm::vec2 GetPosition() const { return position_; }
 	Circle ComputeBoundingCircle() const ;
+	void SetCollisionScale(float scale) { collisionScale_ = scale; }
 
 
 private:
@@ -52,6 +53,7 @@ protected:
 	float sheetWidth_, sheetHeight_;
 	int frameCols_, frameRows_;
 	float manscale_ = 1.0f;
+	float collisionScale_ = 1.0f;
 	glm::vec2 velocity_ = glm::vec2(0.0f);
 
 
