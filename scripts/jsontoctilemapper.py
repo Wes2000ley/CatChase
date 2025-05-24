@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-
+"https://www.spritefusion.com/editor"
 # === CONFIGURATION ===
 INPUT_FILE = "input.json"
 OUTPUT_FILE = "tilemap_out.json"
