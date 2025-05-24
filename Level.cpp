@@ -135,7 +135,7 @@ dog_->Update(dt, tileMap.get(), solidTiles);
 void Level::Render(const glm::mat4& proj) {
 	if (tileMap) {
 		tileMap->Draw(proj);
-		tileMap->DrawDebugGrid(proj);
+		//tileMap->DrawDebugGrid(proj);
 	}
 	for (auto& enemy : enemies)
 		enemy->Draw(proj);
