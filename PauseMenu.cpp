@@ -10,6 +10,7 @@ PauseMenu::PauseMenu()
       options_({"Resume", "Change Level", "Quit"})
 { }
 
+
 void PauseMenu::SetActive(bool active) { active_ = active; }
 bool PauseMenu::IsActive() const { return active_; }
 
@@ -17,7 +18,7 @@ void PauseMenu::Navigate(int direction) {
     selectedIndex_ = (selectedIndex_ + direction + COUNT) % COUNT;
 }
 
-void PauseMenu::Select(std::function<void(Option)> callback) {
+void PauseMenu::Select(const std::function<void(Option)> &callback) {
     if (currentMode_ == Mode::MAIN) {
         if (selectedIndex_ == CHANGE_LEVEL) {
             currentMode_ = Mode::LEVEL_SELECT;
@@ -49,29 +50,13 @@ void PauseMenu::Render() {
     shader->SetInteger("image", 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    float vertices[] = {
-        0.0f, h, 0.0f, 1.0f,
-        0.0f, 0.0f, 0.0f, 0.0f,
-        w, 0.0f, 1.0f, 0.0f,
+    initRenderData(); // ✅ new
 
-        0.0f, h, 0.0f, 1.0f,
-        w, 0.0f, 1.0f, 0.0f,
-        w, h, 1.0f, 1.0f
-    };
-
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
+    glBindVertexArray(quadVAO_);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
+    glBindVertexArray(0);
 
-    TextRenderer &text = ResourceManager::GetTextRenderer("default");
+    TextRenderer& text = ResourceManager::GetTextRenderer("default");
     glm::mat4 projection = glm::ortho(0.0f, w, h, 0.0f);
     float centerX = w / 2.0f;
     float scaleTitle = 2.0f;
@@ -85,7 +70,6 @@ void PauseMenu::Render() {
         float titleX = centerX - titleWidth / 2.0f;
         float titleY = h / 2.0f - 120.0f;
         text.RenderText(title, titleX, titleY, scaleTitle, glm::vec3(1.0f), projection);
-
         startY = titleY + 80.0f;
     } else if (currentMode_ == Mode::LEVEL_SELECT) {
         float headerY = h / 2.0f - 120.0f;
@@ -94,7 +78,7 @@ void PauseMenu::Render() {
 
     if (currentMode_ == Mode::MAIN) {
         for (int i = 0; i < COUNT; ++i) {
-            std::string label = options_[i];
+            const std::string& label = options_[i];
             float optionWidth = text.MeasureTextWidth(label, scaleOption);
             float x = centerX - optionWidth / 2.0f;
             float y = startY + i * 50.0f;
@@ -106,14 +90,12 @@ void PauseMenu::Render() {
         float headerWidth = text.MeasureTextWidth(header, scaleOption);
         float headerY = h / 2.0f - 120.0f;
         text.RenderText(header, centerX - headerWidth / 2.0f, headerY, scaleOption, glm::vec3(1.0f), projection);
-        startY = headerY + 60.0f;
-
 
         for (int i = 0; i < (int) levelNames_.size(); ++i) {
-            std::string label = levelNames_[i];
+            const std::string& label = levelNames_[i];
             float optionWidth = text.MeasureTextWidth(label, scaleOption);
             float x = centerX - optionWidth / 2.0f;
-            float y = startY + i * (scaleOption * 35.0f);
+            float y = headerY + 60.0f + i * (scaleOption * 35.0f);
             glm::vec3 color = (i == selectedLevelIndex_) ? glm::vec3(0.5f, 1.0f, 0.5f) : glm::vec3(1.0f);
             text.RenderText(label, x, y, scaleOption, color, projection);
         }
@@ -162,4 +144,37 @@ PauseMenu::MenuOptionBounds PauseMenu::GetLevelBounds(int index, float w, float 
 void PauseMenu::NavigateLevels(int direction) {
     if (levelNames_.empty()) return;
     selectedLevelIndex_ = (selectedLevelIndex_ + direction + levelNames_.size()) % levelNames_.size();
+}
+void PauseMenu::initRenderData() {
+    if (quadVAO_ != 0)
+        return;
+
+    float vertices[] = {
+        0.0f, 1080.0f, 0.0f, 1.0f,
+        0.0f,    0.0f, 0.0f, 0.0f,
+        1920.0f, 0.0f, 1.0f, 0.0f,
+
+        0.0f, 1080.0f, 0.0f, 1.0f,
+        1920.0f, 0.0f, 1.0f, 0.0f,
+        1920.0f, 1080.0f, 1.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &quadVAO_);
+    glGenBuffers(1, &quadVBO_);
+
+    glBindVertexArray(quadVAO_);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+PauseMenu::~PauseMenu() {
+    if (quadVAO_) glDeleteVertexArrays(1, &quadVAO_);
+    if (quadVBO_) glDeleteBuffers(1, &quadVBO_);
+
 }

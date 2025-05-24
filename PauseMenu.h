@@ -14,12 +14,13 @@ public:
 	};
 
 	PauseMenu();
+	~PauseMenu();
 
 	void SetActive(bool active);
 	bool IsActive() const;
 
 	void Navigate(int direction);
-	void Select(std::function<void(Option)> callback);
+	void Select(const std::function<void(Option)> &callback);
 	void SetSelectedIndex(int index);
 	int GetSelectedIndex() const { return selectedIndex_; }
 
@@ -44,6 +45,10 @@ private:
 	bool active_;
 	int selectedIndex_;
 	int selectedLevelIndex_ = 0;
+
+	unsigned int quadVAO_ = 0;
+	unsigned int quadVBO_ = 0;
+	void initRenderData(); // new
 
 	Mode currentMode_ = Mode::MAIN;
 	std::vector<std::string> options_;
