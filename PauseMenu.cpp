@@ -42,11 +42,11 @@ void PauseMenu::Render() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_DEPTH_TEST);
 
-    Shader shader = ResourceManager::GetShader("pause");
-    shader.Use();
-    shader.SetMatrix4("projection", glm::ortho(0.0f, w, h, 0.0f));
-    shader.SetVector4f("overlayColor", glm::vec4(0.36f, 0.36f, 0.35f, 0.4f));
-    shader.SetInteger("image", 0);
+    std::shared_ptr<Shader> shader = ResourceManager::GetShader("pause");
+    shader->Use();
+    shader->SetMatrix4("projection", glm::ortho(0.0f, w, h, 0.0f));
+    shader->SetVector4f("overlayColor", glm::vec4(0.36f, 0.36f, 0.35f, 0.4f));
+    shader->SetInteger("image", 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     float vertices[] = {

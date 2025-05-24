@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include <glad/glad.h>
 
@@ -22,16 +23,16 @@ class ResourceManager
 {
 public:
     // resource storage
-    static std::map<std::string, Shader>    Shaders;
-    static std::map<std::string, Texture2D> Textures;
+    static std::unordered_map<std::string, std::shared_ptr<Shader>> Shaders;
+    static std::unordered_map<std::string, std::shared_ptr<Texture2D>> Textures;
     // loads (and generates) a shader program from file loading vertex, fragment (and geometry) shader's source code. If gShaderFile is not nullptr, it also loads a geometry shader
-    static Shader&    LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name);
+    static std::shared_ptr<Shader> LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, const std::string &name);
     // retrieves a stored sader
-    static Shader &GetShader(const std::string &name);
+    static std::shared_ptr<Shader> GetShader(const std::string &name);
     // loads (and generates) a texture from file
-    static Texture2D& LoadTexture(const char *file, bool alpha, std::string name);
+    static std::shared_ptr<Texture2D> LoadTexture(const char *file, bool alpha, const std::string &name);
     // retrieves a stored texture
-    static Texture2D &GetTexture(const std::string &name);
+    static std::shared_ptr<Texture2D> GetTexture(const std::string &name);
     // properly de-allocates all loaded resources
     static void      Clear();
 

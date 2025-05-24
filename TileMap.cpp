@@ -128,11 +128,11 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
     initGridLines(); // Ensure it's set up
 
     // 1. Draw grid lines
-    Shader gridShader = ResourceManager::GetShader("grid");
-    gridShader.Use();
-    gridShader.SetMatrix4("projection", projection);
-    gridShader.SetMatrix4("model", glm::mat4(1.0f));
-    gridShader.SetVector3f("lineColor", glm::vec3(0.0f)); // Black
+    std::shared_ptr<Shader> gridShader = ResourceManager::GetShader("grid");
+    gridShader->Use();
+    gridShader->SetMatrix4("projection", projection);
+    gridShader->SetMatrix4("model", glm::mat4(1.0f));
+    gridShader->SetVector3f("lineColor", glm::vec3(0.0f)); // Black
 
     glBindVertexArray(gridVAO_);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(gridLines_.size() / 2));
@@ -141,7 +141,7 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
     // 2. Draw coordinates inside each tile
     if (!textRenderer_) return; // Avoid null crash
 
-    Shader textShader = ResourceManager::GetShader("text");
+    std::shared_ptr<Shader> textShader = ResourceManager::GetShader("text");
 
     const int cols = static_cast<int>(mapData_[0].size());
     const int rows = static_cast<int>(mapData_.size());

@@ -1,95 +1,100 @@
-/*******************************************************************
-** This code is part of Breakout.
-**
-** Breakout is free software: you can redistribute it and/or modify
-** it under the terms of the CC BY 4.0 license as published by
-** Creative Commons, either version 4 of the License, or (at your
-** option) any later version.
-******************************************************************/
 #include "resource_manager.h"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#define STB_IMAGE_IMPLEMENTATION
 #include <memory>
 #include <unordered_map>
-
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 // Instantiate static variables
-std::map<std::string, Texture2D>    ResourceManager::Textures;
-std::map<std::string, Shader>       ResourceManager::Shaders;
+std::unordered_map<std::string, std::shared_ptr<Texture2D>> ResourceManager::Textures;
+std::unordered_map<std::string, std::shared_ptr<Shader>>    ResourceManager::Shaders;
+std::map<std::string, std::shared_ptr<TextRenderer>>        ResourceManager::TextRenderers;
+static std::unordered_map<std::string, std::string>         texturePaths;
 
-static std::unordered_map<std::string, std::string> texturePaths;
-
-Texture2D& ResourceManager::LoadTexture(const char* file, bool alpha, std::string name) {
+std::shared_ptr<Texture2D> ResourceManager::LoadTexture(const char* file, bool alpha, const std::string& name) {
     std::string newPath = file;
 
-    // Only reload if the path changed
     if (Textures.find(name) != Textures.end()) {
         if (texturePaths[name] == newPath)
             return Textures[name]; // same file, skip reload
     }
 
     texturePaths[name] = newPath;
-    Textures[name] = loadTextureFromFile(file, alpha);
-    return Textures[name];
+
+    auto texture = std::make_shared<Texture2D>();
+    if (alpha) {
+        texture->Internal_Format = GL_RGBA;
+        texture->Image_Format = GL_RGBA;
+    }
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
+    if (!data) {
+        std::cerr << "❌ Failed to load texture: " << file << std::endl;
+        return nullptr;
+    }
+
+    texture->Generate(width, height, data);
+    stbi_image_free(data);
+    Textures[name] = texture;
+
+    return texture;
 }
 
-
-Shader& ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, std::string name) {
-    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
-    return Shaders[name];
+std::shared_ptr<Shader> ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, const std::string& name) {
+    auto shader = std::make_shared<Shader>();
+    *shader = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
+    Shaders[name] = shader;
+    return shader;
 }
 
-
-
-Shader& ResourceManager::GetShader(const std::string& name) {
-    return Shaders.at(name);
+std::shared_ptr<Texture2D> ResourceManager::GetTexture(const std::string &name) {
+    auto it = Textures.find(name);
+    if (it != Textures.end()) return it->second;
+    std::cerr << "⚠️ Texture not found: " << name << std::endl;
+    return nullptr;
 }
 
-Texture2D& ResourceManager::GetTexture(const std::string& name) {
-    return Textures.at(name);
+std::shared_ptr<Shader> ResourceManager::GetShader(const std::string &name) {
+    auto it = Shaders.find(name);
+    if (it != Shaders.end()) return it->second;
+    std::cerr << "⚠️ Shader not found: " << name << std::endl;
+    return nullptr;
 }
 
 void ResourceManager::Clear() {
-    for (auto& iter : Shaders)
-        glDeleteProgram(iter.second.ID);
-    for (auto& iter : Textures)
-        glDeleteTextures(1, &iter.second.ID);
+    for (auto& [name, shader] : Shaders)
+        if (shader && shader->ID) glDeleteProgram(shader->ID);
+    for (auto& [name, texture] : Textures)
+        if (texture && texture->ID) glDeleteTextures(1, &texture->ID);
 
     Shaders.clear();
     Textures.clear();
     TextRenderers.clear();
-    texturePaths.clear(); // cleanup cached texture paths
+    texturePaths.clear();
 }
 
+Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
+    std::string vertexCode, fragmentCode, geometryCode;
 
-Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
-{
-    // 1. retrieve the vertex/fragment source code from filePath
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::string geometryCode;
-    try
-    {
-        // open files
+    try {
         std::ifstream vertexShaderFile(vShaderFile);
         std::ifstream fragmentShaderFile(fShaderFile);
         std::stringstream vShaderStream, fShaderStream;
-        // read file's buffer contents into streams
+
         vShaderStream << vertexShaderFile.rdbuf();
         fShaderStream << fragmentShaderFile.rdbuf();
-        // close file handlers
+
         vertexShaderFile.close();
         fragmentShaderFile.close();
-        // convert stream into string
+
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
-        // if geometry shader path is present, also load a geometry shader
-        if (gShaderFile != nullptr)
-        {
+
+        if (gShaderFile != nullptr) {
             std::ifstream geometryShaderFile(gShaderFile);
             std::stringstream gShaderStream;
             gShaderStream << geometryShaderFile.rdbuf();
@@ -97,64 +102,45 @@ Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *
             geometryCode = gShaderStream.str();
         }
     }
-    catch (std::exception e)
-    {
-        std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
+    catch (std::exception& e) {
+        std::cerr << "ERROR::SHADER: Failed to read shader files: " << e.what() << std::endl;
     }
-    const char *vShaderCode = vertexCode.c_str();
-    const char *fShaderCode = fragmentCode.c_str();
-    const char *gShaderCode = geometryCode.c_str();
-    // 2. now create shader object from source code
+
     Shader shader;
-    shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
+    shader.Compile(
+        vertexCode.c_str(),
+        fragmentCode.c_str(),
+        gShaderFile ? geometryCode.c_str() : nullptr
+    );
     return shader;
 }
 
-Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
-{
-    // create texture object
-    Texture2D texture;
-    if (alpha)
-    {
-        texture.Internal_Format = GL_RGBA;
-        texture.Image_Format = GL_RGBA;
-    }
-    // load image
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
-    // now generate texture
-    texture.Generate(width, height, data);
-    // and finally free image data
-    stbi_image_free(data);
-    return texture;
-}
-
-std::map<std::string, std::shared_ptr<TextRenderer>> ResourceManager::TextRenderers;
-
-// ✅ GOOD
 std::shared_ptr<TextRenderer> ResourceManager::LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height) {
     auto renderer = std::make_shared<TextRenderer>(width, height);
     TextRenderers[name] = renderer;
     return renderer;
 }
 
-
-
-
 TextRenderer& ResourceManager::GetTextRenderer(const std::string& name) {
-    return *TextRenderers.at(name);
+    auto it = TextRenderers.find(name);
+    if (it != TextRenderers.end()) return *it->second;
+    throw std::runtime_error("TextRenderer '" + name + "' not found");
 }
 
 void ResourceManager::UnloadTexture(const std::string& name) {
-    if (Textures.count(name)) {
-        glDeleteTextures(1, &Textures[name].ID);
-        Textures.erase(name);
+    auto it = Textures.find(name);
+    if (it != Textures.end()) {
+        if (it->second && it->second->ID)
+            glDeleteTextures(1, &it->second->ID);
+        Textures.erase(it);
     }
 }
 
 void ResourceManager::UnloadShader(const std::string& name) {
-    if (Shaders.count(name)) {
-        glDeleteProgram(Shaders[name].ID);
-        Shaders.erase(name);
+    auto it = Shaders.find(name);
+    if (it != Shaders.end()) {
+        if (it->second && it->second->ID)
+            glDeleteProgram(it->second->ID);
+        Shaders.erase(it);
     }
 }

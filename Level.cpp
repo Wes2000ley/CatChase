@@ -73,15 +73,15 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 
 	// ✅ Use loaded shader + tilemap texture
-	auto shader = std::make_shared<Shader>(ResourceManager::GetShader("sprite"));
-	Texture2D tileTex = ResourceManager::GetTexture("tilemap");
+	auto shader = ResourceManager::GetShader("sprite");
+	std::shared_ptr<Texture2D> tileTex = ResourceManager::GetTexture("tilemap");
 
 	// ✅ TileMap setup
 	int tileWidth = data["tileSize"].value("width", 16);
 	int tileHeight = data["tileSize"].value("height", 16);
 	int mapWidth = data["levelSize"].value("width", 224);
 	int mapHeight = data["levelSize"].value("height", 240);
-	tileMap = std::make_unique<TileMap>(*shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
+	tileMap = std::make_unique<TileMap>(*shader, *tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
 	// ✅ Text renderer from JSON
 	TextRenderer* textRenderer = new TextRenderer(width, height);
@@ -99,15 +99,15 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	float px = playerData["x"];
 	float py = playerData["y"];
 	float pscale = playerData.value("scale", 0.6f);
-	auto dogTexture = std::make_shared<Texture2D>(ResourceManager::GetTexture("dog"));
+	auto dogTexture = ResourceManager::GetTexture("dog");
 	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
 	dog_->SetScale(pscale);
 
 	// ✅ Enemies
 	for (const auto& e : data["enemies"]) {
 		std::string type = e["type"];
-		Shader shader = ResourceManager::GetShader(e.value("shader", "sprite"));
-		Texture2D& texture = ResourceManager::GetTexture(e["texture"]);
+		std::shared_ptr<Shader> shader = ResourceManager::GetShader(e.value("shader", "sprite"));
+		std::shared_ptr<Texture2D> texture = ResourceManager::GetTexture(e["texture"]);
 
 		glm::vec2 pos = {e["x"], e["y"]};
 		glm::ivec2 frame = {e["frameX"], e["frameY"]};
@@ -117,7 +117,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 		int rows = e["animSpeed"];
 		float scale = e.value("scale", 1.0f);
 
-		auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
+		auto enemy = EnemyRegistry::Create(type, *shader, *texture, pos, frame, fw, fh, cols, rows);
 		if (enemy) {
 			enemy->SetScale(scale);
 			enemies.push_back(std::move(enemy));

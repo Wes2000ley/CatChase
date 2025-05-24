@@ -10,6 +10,7 @@
 #define TEXT_RENDERER_H
 
 #include <map>
+#include <memory>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -37,7 +38,7 @@ public:
 	// holds a list of pre-compiled Characters
 	std::map<char, Character> Characters;
 	// shader used for text rendering
-	Shader TextShader;
+	std::shared_ptr<Shader> TextShader;
 	// constructor
 	TextRenderer(unsigned int width, unsigned int height);
 	// pre-compiles a list of characters from the given font
