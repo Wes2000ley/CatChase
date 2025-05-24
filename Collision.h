@@ -74,4 +74,8 @@ inline bool TryMove(glm::vec2& pos,
 	return false; // blocked
 }
 
+inline bool AABBIntersect(const glm::vec4& a, const glm::vec4& b) {
+	return a.x < b.z && a.z > b.x && a.y < b.w && a.w > b.y;
+}
+
 #endif

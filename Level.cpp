@@ -11,10 +11,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-inline bool AABBIntersect(const glm::vec4& a, const glm::vec4& b) {
-	return a.x < b.z && a.z > b.x && a.y < b.w && a.w > b.y;
-}
-
 
 
 Level::Level(): dog_(nullptr) {
@@ -139,65 +135,74 @@ void Level::Update(float dt) {
 	for (const auto& layer : tileLayers)
 		mapDataPtrs.push_back(&layer->GetMapData());
 
-	int tileWidth = tileLayers[0]->GetTileWidth();
+	if (tileLayers.empty()) return; // safety guard
+
+	int tileWidth  = tileLayers[0]->GetTileWidth();
 	int tileHeight = tileLayers[0]->GetTileHeight();
 
-	// 🐶 Save old position
-	glm::vec2 oldPos = dog_->GetPosition();
-	glm::vec4 playerBounds = dog_->GetBoundingBox();
-	glm::vec4 playerBox = playerBounds;
+	// 🐶 Save initial dog state
+	const glm::vec2 oldDogPos = dog_->GetPosition();
+	const glm::vec4 initialPlayerBounds = dog_->GetBoundingBox();
 
-	// 👾 Update enemies
+	// 👾 Update enemies with initial player bounds
 	for (auto& enemy : enemies)
-		enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, playerBounds);
+		enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, initialPlayerBounds);
 
 	// 🐕 Update player movement
 	dog_->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, glm::vec2(internalWidth, internalHeight));
-	playerBox = dog_->GetBoundingBox();
+	glm::vec4 playerBox = dog_->GetBoundingBox();
 
-	// 🧱 Handle collisions
+	// 🧱 Handle dog-enemy collisions
 	for (const auto& enemy : enemies) {
 		if (!enemy) continue;
 
-		glm::vec4 enemyBox = enemy->GetBoundingBox();
+		const glm::vec4 enemyBox = enemy->GetBoundingBox();
 		if (!AABBIntersect(playerBox, enemyBox)) continue;
 
+		constexpr int maxPushAttempts = 4;
 		int pushes = 0;
-		const int maxPushAttempts = 4;
 
 		while (AABBIntersect(playerBox, enemyBox) && pushes++ < maxPushAttempts) {
-			glm::vec2 enemyCenter = {(enemyBox.x + enemyBox.z) * 0.5f, (enemyBox.y + enemyBox.w) * 0.5f};
-			glm::vec2 dogCenter   = {(playerBox.x + playerBox.z) * 0.5f, (playerBox.y + playerBox.w) * 0.5f};
+			const glm::vec2 enemyCenter = {
+				(enemyBox.x + enemyBox.z) * 0.5f,
+				(enemyBox.y + enemyBox.w) * 0.5f
+			};
+
+			const glm::vec2 dogCenter = {
+				(playerBox.x + playerBox.z) * 0.5f,
+				(playerBox.y + playerBox.w) * 0.5f
+			};
+
 			glm::vec2 pushDir = dogCenter - enemyCenter;
-
 			if (glm::length(pushDir) == 0.0f) break;
-			pushDir = glm::normalize(pushDir);
 
-			float pushStep = 1.0f;
+			pushDir = glm::normalize(pushDir);
+			const float pushStep = 1.0f;
 			glm::vec2 newPos = dog_->GetPosition() + pushDir * pushStep;
 
-			float dogW = playerBox.z - playerBox.x;
-			float dogH = playerBox.w - playerBox.y;
-			newPos.x = std::clamp(newPos.x, 0.0f, internalWidth - dogW);
+			const float dogW = playerBox.z - playerBox.x;
+			const float dogH = playerBox.w - playerBox.y;
+
+			newPos.x = std::clamp(newPos.x, 0.0f, internalWidth  - dogW);
 			newPos.y = std::clamp(newPos.y, 0.0f, internalHeight - dogH);
 
-			glm::vec4 testBox = {newPos.x, newPos.y, newPos.x + dogW, newPos.y + dogH};
+			const glm::vec4 testBox = {
+				newPos.x, newPos.y,
+				newPos.x + dogW, newPos.y + dogH
+			};
 
 			if (!IsBoxBlocked(testBox, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
 				dog_->SetPosition(newPos);
 				playerBox = testBox;
 			} else {
-				break; // Wall hit
+				break; // wall or solid tile hit
 			}
 		}
 
-		dog_->SetVelocity(glm::vec2(0.0f)); // only once per loop
+		// Reset dog velocity after resolving overlap
+		dog_->SetVelocity(glm::vec2(0.0f));
 	}
 }
-
-
-
-
 
 
 void Level::Render(const glm::mat4& proj) {
