@@ -44,25 +44,26 @@ Shader& ResourceManager::LoadShader(const char* vShaderFile, const char* fShader
 
 
 
-Shader ResourceManager::GetShader(std::string name)
-{
-    return Shaders[name];
+Shader& ResourceManager::GetShader(const std::string& name) {
+    return Shaders.at(name);
 }
 
-Texture2D &ResourceManager::GetTexture(std::string name)
-{
-    return Textures[name];
+Texture2D& ResourceManager::GetTexture(const std::string& name) {
+    return Textures.at(name);
 }
 
-void ResourceManager::Clear()
-{
-    // (properly) delete all shaders
-    for (auto iter : Shaders)
+void ResourceManager::Clear() {
+    for (auto& iter : Shaders)
         glDeleteProgram(iter.second.ID);
-    // (properly) delete all textures
-    for (auto iter : Textures)
+    for (auto& iter : Textures)
         glDeleteTextures(1, &iter.second.ID);
+
+    Shaders.clear();
+    Textures.clear();
+    TextRenderers.clear();
+    texturePaths.clear(); // cleanup cached texture paths
 }
+
 
 Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
 {
