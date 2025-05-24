@@ -14,6 +14,7 @@ public:
 		int textureWidth, int textureHeight,
 		int tileWidth, int tileHeight);
 
+
 	void Load(const std::vector<std::vector<int>>& mapData);
 	void Draw(const glm::mat4 & projection);
 
