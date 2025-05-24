@@ -17,10 +17,7 @@ public:
 		// placeholder
 	}
 
-	void Update(float dt, TileMap* tileMap) override {
-		// ✅ Add movement or test logic here
-		position_.x += sin(glfwGetTime()) * 10.0f * dt;
-	}
+
 };
 
 class SkeletonEnemy : public Enemy {
@@ -31,10 +28,7 @@ public:
 		// placeholder
 	}
 
-	void Update(float dt, TileMap* tileMap) override {
-		// ✅ Add movement or test logic here
-		position_.x += cos(glfwGetTime()) * 10.0f * dt;
-	}
+
 };
 
 

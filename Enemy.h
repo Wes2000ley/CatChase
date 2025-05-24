@@ -1,6 +1,8 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include <unordered_set>
+
 #include "shader.h"
 #include "texture.h"
 #include <glm/glm.hpp>
@@ -20,10 +22,14 @@ public:
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);
-	virtual void Update(float dt, TileMap* tileMap) = 0;
+	void Update(float dt, const std::vector<std::unique_ptr<TileMap>> &layers, const std::unordered_set<int> &solidTiles) ;
+	glm::vec4 GetBoundingBox() const;
+	glm::vec4 ComputeBoundingBox() const;
+
 private:
 	std::shared_ptr<Shader> shader_;
 	std::shared_ptr<Texture2D> texture_;
+	glm::vec4 boundingBox_;
 
 
 
@@ -39,6 +45,8 @@ protected:
 	float sheetWidth_, sheetHeight_;
 	int frameCols_, frameRows_;
 	float manscale_ = 1.0f;
+	glm::vec2 velocity_ = glm::vec2(0.0f);
+
 };
 
 #endif

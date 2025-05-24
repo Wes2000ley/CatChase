@@ -11,7 +11,9 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-
+inline bool AABBIntersect(const glm::vec4& a, const glm::vec4& b) {
+	return a.x < b.z && a.z > b.x && a.y < b.w && a.w > b.y;
+}
 
 Level::Level(): dog_(nullptr) {
 }
@@ -130,10 +132,38 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 
 void Level::Update(float dt) {
+	// Update enemies
 	for (auto& enemy : enemies)
-		enemy->Update(dt, tileMap.get());
-dog_->Update(dt, tileLayers, solidTiles, glm::vec2(internalWidth, internalHeight));
+		enemy->Update(dt, tileLayers, solidTiles);
+
+	// Save previous player position before moving
+	glm::vec2 oldPos = dog_->GetPosition();
+
+	// Update player with movement and collision vs. tiles + screen bounds
+	dog_->Update(dt, tileLayers, solidTiles, glm::vec2(internalWidth, internalHeight));
+
+	// Check for collisions between player and enemies
+	for (const auto& enemy : enemies) {
+		if (!enemy) continue;
+
+		glm::vec4 dogBox   = dog_->GetBoundingBox();   // (x1, y1, x2, y2)
+		glm::vec4 enemyBox = enemy->GetBoundingBox();  // (x1, y1, x2, y2)
+
+		bool collision =
+			dogBox.x < enemyBox.z && dogBox.z > enemyBox.x &&
+			dogBox.y < enemyBox.w && dogBox.w > enemyBox.y;
+
+		if (collision) {
+			std::cout << "💥 Dog collided with enemy! Pushing back.\n";
+
+			// Prevent overlap
+			dog_->SetPosition(oldPos);
+			dog_->SetVelocity(glm::vec2(0.0f)); // Stop movement
+			break; // No need to check further this frame
+		}
+	}
 }
+
 
 void Level::Render(const glm::mat4& proj) {
 	for (auto& layer : tileLayers) {

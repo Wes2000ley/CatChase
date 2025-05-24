@@ -17,6 +17,8 @@ Dog::Dog(std::shared_ptr<Shader> shader,
 {
     if (quadVAO_ == 0)
         initRenderData();
+
+    boundingBox_ = ComputeBoundingBox(); // initialize box
 }
 
 void Dog::Draw(const glm::mat4& projection)
@@ -58,23 +60,21 @@ void Dog::Update(float dt,
 
     float frameWidth  = (256.0f / 16.0f) * manscale_;
     float frameHeight = (48.0f / 3.0f) * manscale_;
-
     glm::vec2 topLeft     = newPos;
     glm::vec2 bottomRight = newPos + glm::vec2(frameWidth, frameHeight);
 
-    // === Clamp to screen edges ===
+    // Edge bounds
     if (topLeft.x < 0.0f || topLeft.y < 0.0f ||
         bottomRight.x > screenSize.x || bottomRight.y > screenSize.y) {
         std::cout << "📏 Edge collision\n";
         velocity_ = glm::vec2(0.0f);
         return;
-        }
+    }
 
     if (layers.empty() || layers[0]->GetMapData().empty())
         return;
 
-    // Use tile size from first layer (assuming all same dimensions)
-    int tileWidth = layers[0]->GetTileWidth();
+    int tileWidth  = layers[0]->GetTileWidth();
     int tileHeight = layers[0]->GetTileHeight();
 
     int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
@@ -100,9 +100,30 @@ void Dog::Update(float dt,
         }
     }
 
+    // ✅ Apply position and update bounding box
     position_ = newPos;
+    boundingBox_ = ComputeBoundingBox();
 }
 
+glm::vec4 Dog::ComputeBoundingBox() const {
+    float frameWidth  = (256.0f / 16.0f) * manscale_;
+    float frameHeight = (48.0f / 3.0f) * manscale_;
+    glm::vec2 bottomRight = position_ + glm::vec2(frameWidth, frameHeight);
+    return glm::vec4(position_.x, position_.y, bottomRight.x, bottomRight.y);
+}
+
+glm::vec4 Dog::GetBoundingBox() const {
+    return boundingBox_;
+}
+
+glm::vec2 Dog::GetPosition() const {
+    return position_;
+}
+
+void Dog::SetPosition(const glm::vec2& pos) {
+    position_ = pos;
+    boundingBox_ = ComputeBoundingBox(); // keep updated
+}
 
 void Dog::SetScale(float manscale) {
     manscale_ = manscale;
