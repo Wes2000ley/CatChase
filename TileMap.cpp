@@ -156,3 +156,13 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
         }
     }
 }
+void TileMap::SetTextRenderer(std::shared_ptr<TextRenderer> text) {
+    textRenderer_ = std::move(text);
+}
+
+void TileMap::Destroy() {
+    if (quadVAO_ != 0) {
+        glDeleteVertexArrays(1, &quadVAO_);
+        quadVAO_ = 0;
+    }
+}

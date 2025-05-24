@@ -22,7 +22,10 @@ public:
 	int GetTileHeight() const { return tileHeight_; }
 	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
 	void DrawDebugGrid(const glm::mat4& projection);
-	void SetTextRenderer(TextRenderer* renderer) { textRenderer_ = renderer; }
+
+	void Destroy();
+
+	void SetTextRenderer(std::shared_ptr<TextRenderer> text);
 
 private:
 	std::shared_ptr<Shader> shader_;
@@ -31,7 +34,8 @@ private:
 	int tileWidth_, tileHeight_;
 	std::vector<std::vector<int>> mapData_;
 	int tilesPerRow_, tilesPerCol_;
-	TextRenderer* textRenderer_ = nullptr;
+	std::shared_ptr<TextRenderer> textRenderer_;
+
 
 	static unsigned int quadVAO_;
 	void initRenderData() const;
