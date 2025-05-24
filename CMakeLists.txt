@@ -42,6 +42,8 @@ add_executable(Game
         LevelManager.h
         PauseMenu.cpp
         PauseMenu.h
+        EnemyRegistry.cpp
+        EnemyRegistry.h
 )
 
 target_link_libraries(Game
@@ -63,7 +65,7 @@ add_custom_target(copy_resources ALL
 
 add_dependencies(Game copy_resources)
 if (WIN32)
-    set_target_properties(Game PROPERTIES WIN32_EXECUTABLE TRUE)
+   # set_target_properties(Game PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 # 🗜️ Compress Game.exe and resources into GamePackage.zip using cmake -E tar
 add_custom_command(

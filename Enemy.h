@@ -22,14 +22,17 @@ public:
 private:
 	Shader shader_;
 	Texture2D texture_;
+
+
+	static unsigned int quadVAO_;
+	void initRenderData();
+
+protected:
 	glm::vec2 position_;
 	glm::ivec2 frame_;
 	float sheetWidth_, sheetHeight_;
 	int frameCols_, frameRows_;
 	float manscale_ = 1.0f;
-
-	static unsigned int quadVAO_;
-	void initRenderData();
 };
 
 #endif

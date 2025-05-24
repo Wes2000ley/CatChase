@@ -5,6 +5,8 @@
 
 #include "Dog.h"
 #include "Dog.h"
+#include "Enemies.h"
+#include "EnemyRegistry.h"
 
 unsigned int Enemy::quadVAO_ = 0;
 

@@ -84,35 +84,25 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	dog_->SetScale(pscale);
 
 	// ✅ Enemies
-	for (auto& enemyData : data["enemies"]) {
-		std::string type = enemyData["type"];
-		float x = enemyData["x"];
-		float y = enemyData["y"];
-		int fx = enemyData["frameX"];
-		int fy = enemyData["frameY"];
-		float fw = enemyData["frameW"];
-		float fh = enemyData["frameH"];
-		int frames = enemyData["frameCount"];
-		int speed = enemyData["animSpeed"];
-		float scale = enemyData.value("scale", 1.0f);
-		std::string textureName = enemyData.value("texture", type);
-		std::string shaderName = enemyData.value("shader", "sprite");
+	for (const auto& e : data["enemies"]) {
+		std::string type = e["type"];
+		Shader shader = ResourceManager::GetShader(e.value("shader", "sprite"));
+		Texture2D& texture = ResourceManager::GetTexture(e["texture"]);
 
-		Shader enemyShader = ResourceManager::GetShader(shaderName);
-		Texture2D enemyTexture = ResourceManager::GetTexture(textureName);
+		glm::vec2 pos = {e["x"], e["y"]};
+		glm::ivec2 frame = {e["frameX"], e["frameY"]};
+		float fw = e["frameW"];
+		float fh = e["frameH"];
+		int cols = e["frameCount"];
+		int rows = e["animSpeed"];
+		float scale = e.value("scale", 1.0f);
 
-		std::unique_ptr<Enemy> enemy;
-		if (type == "slime") {
-			enemy = std::make_unique<SlimeEnemy>(enemyShader, enemyTexture,
-				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
-		} else if (type == "skeleton") {
-			enemy = std::make_unique<SkeletonEnemy>(enemyShader, enemyTexture,
-				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
-		}
-
+		auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
 		if (enemy) {
 			enemy->SetScale(scale);
 			enemies.push_back(std::move(enemy));
+		} else {
+			std::cerr << "❌ Unknown enemy type: " << type << "\n";
 		}
 	}
 }

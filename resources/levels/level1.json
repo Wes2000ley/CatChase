@@ -63,7 +63,9 @@
       "frameW": 192,
       "frameH": 96,
       "frameCount": 6,
-      "animSpeed": 3
+      "animSpeed": 3,
+      "texture": "slime",
+      "shader": "sprite"
     },
     {
       "type": "skeleton",
@@ -75,7 +77,9 @@
       "frameH": 320,
       "frameCount": 6,
       "animSpeed": 10,
-      "scale": 0.75
+      "scale": 0.75,
+      "texture": "skeleton",
+      "shader": "sprite"
     },
     {
       "type": "skeleton",
@@ -87,7 +91,9 @@
       "frameH": 320,
       "frameCount": 6,
       "animSpeed": 10,
-      "scale": 0.75
+      "scale": 0.75,
+      "texture": "skeleton",
+      "shader": "sprite"
     }
   ]
 }
