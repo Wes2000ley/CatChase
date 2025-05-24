@@ -1,6 +1,8 @@
 #include "game.h"
 
 #include <unordered_set>
+#include <cstdlib> // for rand()
+#include <ctime>   // for seeding rand (e.g., in main())
 
 #include "Dog.h"
 #include "Enemies.h"
@@ -28,6 +30,8 @@ Game::~Game()
 }
 
 void Game::Init() {
+
+    srand(static_cast<unsigned>(time(nullptr)));
     ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
 
 

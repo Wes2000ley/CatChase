@@ -53,8 +53,9 @@ void Enemy::Draw(const glm::mat4& projection)
 }
 
 void Enemy::Update(float dt,
-                   const std::vector<std::unique_ptr<TileMap>>& layers,
-                   const std::unordered_set<int>& solidTiles)
+                    const std::vector<std::unique_ptr<TileMap>>& layers,
+                    const std::unordered_set<int>& solidTiles,
+                    const glm::vec4& playerBounds)
 {
     glm::vec2 newPos = position_ + velocity_ * dt;
 

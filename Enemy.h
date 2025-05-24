@@ -22,7 +22,10 @@ public:
 	void SetFrame(glm::ivec2 frame);
 	void SetPosition(glm::vec2 position);
 	void SetScale(float manscale);
-	virtual void Update(float dt, const std::vector<std::unique_ptr<TileMap>> &layers, const std::unordered_set<int> &solidTiles) ;
+	virtual void Update(float dt,
+						const std::vector<std::unique_ptr<TileMap>>& layers,
+						const std::unordered_set<int>& solidTiles,
+						const glm::vec4& playerBounds);
 	glm::vec4 GetBoundingBox() const;
 	glm::vec4 ComputeBoundingBox() const;
 	virtual void Attack() { /* default = do nothing */ }

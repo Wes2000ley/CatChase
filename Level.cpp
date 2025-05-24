@@ -132,37 +132,90 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 
 void Level::Update(float dt) {
-	// Update enemies
-	for (auto& enemy : enemies)
-		enemy->Update(dt, tileLayers, solidTiles);
+    // Save previous player position before moving
+    glm::vec2 oldPos = dog_->GetPosition();
 
-	// Save previous player position before moving
-	glm::vec2 oldPos = dog_->GetPosition();
+    // Update enemies and pass stale (initial) bounds for pre-check logic
+    glm::vec4 initialBounds = dog_->GetBoundingBox();
+    for (auto& enemy : enemies)
+        enemy->Update(dt, tileLayers, solidTiles, initialBounds);
 
-	// Update player with movement and collision vs. tiles + screen bounds
-	dog_->Update(dt, tileLayers, solidTiles, glm::vec2(internalWidth, internalHeight));
+    // Update player movement
+    dog_->Update(dt, tileLayers, solidTiles, glm::vec2(internalWidth, internalHeight));
 
-	// Check for collisions between player and enemies
-	for (const auto& enemy : enemies) {
-		if (!enemy) continue;
+    // Get up-to-date player bounding box (after movement)
+    glm::vec4 playerBounds = dog_->GetBoundingBox();
 
-		glm::vec4 dogBox   = dog_->GetBoundingBox();   // (x1, y1, x2, y2)
-		glm::vec4 enemyBox = enemy->GetBoundingBox();  // (x1, y1, x2, y2)
+    // Check collisions after updates
+    for (const auto& enemy : enemies) {
+        if (!enemy) continue;
 
-		bool collision =
-			dogBox.x < enemyBox.z && dogBox.z > enemyBox.x &&
-			dogBox.y < enemyBox.w && dogBox.w > enemyBox.y;
+        glm::vec4 enemyBox = enemy->GetBoundingBox();
 
-		if (collision) {
-			std::cout << "💥 Dog collided with enemy! Pushing back.\n";
+        bool collision =
+            playerBounds.x < enemyBox.z && playerBounds.z > enemyBox.x &&
+            playerBounds.y < enemyBox.w && playerBounds.w > enemyBox.y;
 
-			// Prevent overlap
-			dog_->SetPosition(oldPos);
-			dog_->SetVelocity(glm::vec2(0.0f)); // Stop movement
-			break; // No need to check further this frame
-		}
-	}
+        if (collision) {
+            std::cout << "💥 Dog collided with enemy! Trying safe pushback...\n";
+
+            glm::vec2 enemyCenter = {
+                (enemyBox.x + enemyBox.z) / 2.0f,
+                (enemyBox.y + enemyBox.w) / 2.0f
+            };
+            glm::vec2 dogCenter = {
+                (playerBounds.x + playerBounds.z) / 2.0f,
+                (playerBounds.y + playerBounds.w) / 2.0f
+            };
+
+            glm::vec2 pushDir = glm::normalize(dogCenter - enemyCenter);
+            float pushStrength = 5.0f;
+
+            glm::vec2 newPos = dog_->GetPosition() + pushDir * pushStrength;
+
+            float dogWidth = playerBounds.z - playerBounds.x;
+            float dogHeight = playerBounds.w - playerBounds.y;
+            glm::vec2 topLeft = newPos;
+            glm::vec2 bottomRight = newPos + glm::vec2(dogWidth, dogHeight);
+
+            bool blocked = false;
+            int tileWidth = tileLayers[0]->GetTileWidth();
+            int tileHeight = tileLayers[0]->GetTileHeight();
+
+            int tileX1 = static_cast<int>(topLeft.x) / tileWidth;
+            int tileY1 = static_cast<int>(topLeft.y) / tileHeight;
+            int tileX2 = static_cast<int>(bottomRight.x) / tileWidth;
+            int tileY2 = static_cast<int>(bottomRight.y) / tileHeight;
+
+            for (int y = tileY1; y <= tileY2 && !blocked; ++y) {
+                for (int x = tileX1; x <= tileX2 && !blocked; ++x) {
+                    for (const auto& layer : tileLayers) {
+                        const auto& mapData = layer->GetMapData();
+                        if (y < 0 || y >= static_cast<int>(mapData.size()) ||
+                            x < 0 || x >= static_cast<int>(mapData[0].size()))
+                            continue;
+
+                        if (solidTiles.count(mapData[y][x])) {
+                            blocked = true;
+                        }
+                    }
+                }
+            }
+
+            if (!blocked) {
+                dog_->SetPosition(newPos);
+            } else {
+                std::cout << "🚫 Pushback canceled: would hit wall.\n";
+                dog_->SetPosition(oldPos); // Reset to safe position
+            }
+
+            dog_->SetVelocity(glm::vec2(0.0f));
+            break; // only resolve one collision per frame
+        }
+    }
 }
+
+
 
 
 void Level::Render(const glm::mat4& proj) {
