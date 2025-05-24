@@ -81,4 +81,5 @@ inline bool CircleIntersect(const Circle& a, const Circle& b) {
     return glm::distance(a.center, b.center) < (a.radius + b.radius);
 }
 
+
 #endif // COLLISION_H

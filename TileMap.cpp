@@ -93,17 +93,30 @@ void TileMap::initRenderData() const {
 }
 
 void TileMap::initGridLines() {
-    if (gridVAO_ != 0) return;  // Already initialized
+    if (gridVAO_ != 0) {
+        // Clear old buffer so new one can be rebuilt correctly
+        glDeleteBuffers(1, &gridVBO_);
+        glDeleteVertexArrays(1, &gridVAO_);
+        gridVBO_ = 0;
+        gridVAO_ = 0;
+    }
 
-    int cols = mapData_[0].size();
-    int rows = mapData_.size();
+    gridLines_.clear(); // 🧹 Important!
+    int rows = static_cast<int>(mapData_.size());
+    int cols = 0;
 
-    // Generate grid lines (horizontal and vertical)
+    // Find the actual max width across all rows
+    for (const auto& row : mapData_)
+        cols = std::max(cols, static_cast<int>(row.size()));
+
+    // Generate vertical grid lines
     for (int x = 0; x <= cols; ++x) {
         float px = x * tileWidth_;
         gridLines_.push_back(px); gridLines_.push_back(0.0f);
         gridLines_.push_back(px); gridLines_.push_back(rows * tileHeight_);
     }
+
+    // Generate horizontal grid lines
     for (int y = 0; y <= rows; ++y) {
         float py = y * tileHeight_;
         gridLines_.push_back(0.0f); gridLines_.push_back(py);
@@ -124,26 +137,24 @@ void TileMap::initGridLines() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-void TileMap::DrawDebugGrid(const glm::mat4& projection)
-{
-    initGridLines(); // Ensure it's set up
 
-    // 1. Draw grid lines
-    std::shared_ptr<Shader> gridShader = ResourceManager::GetShader("grid");
-    gridShader->Use();
-    gridShader->SetMatrix4("projection", projection);
-    gridShader->SetMatrix4("model", glm::mat4(1.0f));
-    gridShader->SetVector3f("lineColor", glm::vec3(0.0f)); // Black
+void TileMap::DrawDebugGrid(const glm::mat4& projection, std::shared_ptr<Shader> debugShader)
+{
+    initGridLines();
+
+    if (debugShader) {
+        debugShader->Use();
+        debugShader->SetMatrix4("projection", projection);
+        debugShader->SetMatrix4("model", glm::mat4(1.0f));
+        debugShader->SetVector3f("lineColor", glm::vec3(0.0f)); // black or your preferred color
+    }
 
     glBindVertexArray(gridVAO_);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(gridLines_.size() / 2));
     glBindVertexArray(0);
 
-    // 2. Draw coordinates inside each tile
-    if (!textRenderer_) return; // Avoid null crash
-
-    std::shared_ptr<Shader> textShader = ResourceManager::GetShader("text");
-
+    // Text overlay
+    if (!textRenderer_) return;
     const int cols = static_cast<int>(mapData_[0].size());
     const int rows = static_cast<int>(mapData_.size());
 
@@ -152,10 +163,11 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection)
             std::string label = std::to_string(x) + "," + std::to_string(y);
             float xpos = x * tileWidth_ + 2.0f;
             float ypos = y * tileHeight_ + 12.0f;
-            textRenderer_->RenderText(label, xpos, ypos, 0.25f, glm::vec3(1.0f), projection); // ✅ Use dynamic label
+            textRenderer_->RenderText(label, xpos, ypos, 0.25f, glm::vec3(1.0f), projection);
         }
     }
 }
+
 void TileMap::SetTextRenderer(std::shared_ptr<TextRenderer> text) {
     textRenderer_ = std::move(text);
 }

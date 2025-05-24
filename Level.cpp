@@ -8,6 +8,7 @@
 #include "Enemies.h"
 #include <fstream>
 #include <iostream>
+#include "DebugDraw.h"
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -73,6 +74,8 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
     auto shader = ResourceManager::GetShader("sprite");
     auto tileTex = ResourceManager::GetTexture("tilemap");
     auto sharedText = ResourceManager::GetTextRendererPtr("default");
+	debugShader_ = ResourceManager::GetShader("grid"); // Or whatever debug shader you use
+
 
     int tileWidth = data["tileSize"].value("width", 16);
     int tileHeight = data["tileSize"].value("height", 16);
@@ -173,21 +176,60 @@ void Level::Update(float dt) {
 
 
 void Level::Render(const glm::mat4& proj) {
-	for (auto& layer : tileLayers) {
+	for (auto& layer : tileLayers)
 		layer->Draw(proj);
-		// layer->DrawDebugGrid(proj); // optional
-	}
 
 	for (auto& enemy : enemies)
 		enemy->Draw(proj);
+
 	dog_->Draw(proj);
+
+	if (debugMode_ && debugShader_) {
+		// 🔴 Debug player + enemy circles
+		DrawDebugCircle(dog_->ComputeBoundingCircle(), glm::vec3(1.0f, 0.0f, 0.0f), proj, debugShader_);
+		for (auto& enemy : enemies)
+			DrawDebugCircle(enemy->ComputeBoundingCircle(), glm::vec3(0.0f, 1.0f, 0.0f), proj, debugShader_);
+
+		// 🟩 Draw debug grid from the layer with most rows
+		if (!tileLayers.empty()) {
+			TileMap* bestLayer = tileLayers[0].get();
+			size_t maxRows = bestLayer->GetMapData().size();
+			size_t maxCols = maxRows > 0 ? bestLayer->GetMapData()[0].size() : 0;
+
+			for (const auto& layer : tileLayers) {
+				const auto& data = layer->GetMapData();
+				size_t rows = data.size();
+				size_t cols = rows > 0 ? data[0].size() : 0;
+				if ((rows > maxRows) || (rows == maxRows && cols > maxCols)) {
+					bestLayer = layer.get();
+					maxRows = rows;
+					maxCols = cols;
+				}
+			}
+
+	bestLayer->DrawDebugGrid(proj, debugShader_);
+		}
+	}
 }
+
+
 void Level::ProcessInput(float dt, const bool* keys) {
 	glm::vec2 velocity(0.0f);
 	if (keys[GLFW_KEY_W]) velocity.y -= 1.0f;
 	if (keys[GLFW_KEY_S]) velocity.y += 1.0f;
 	if (keys[GLFW_KEY_A]) velocity.x -= 1.0f;
 	if (keys[GLFW_KEY_D]) velocity.x += 1.0f;
+
+static bool tabPressed = false;
+	if (keys[GLFW_KEY_TAB]) {
+		if (!tabPressed) {
+			debugMode_ = !debugMode_;
+			tabPressed = true;
+		}
+	} else {
+		tabPressed = false;
+	}
+
 
 	if (glm::length(velocity) > 0.0f)
 		velocity = glm::normalize(velocity);

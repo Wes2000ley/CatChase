@@ -44,6 +44,8 @@ add_executable(Game
         PauseMenu.h
         EnemyRegistry.cpp
         EnemyRegistry.h
+        DebugDraw.cpp
+        DebugDraw.h
 )
 
 target_link_libraries(Game

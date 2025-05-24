@@ -27,6 +27,9 @@ Game::Game(unsigned int width, unsigned int height)
 
 Game::~Game()
 {
+    ResourceManager::UnloadShader("pause");
+    // OR
+    ResourceManager::Clear(); // unloads ALL shaders/textures
 }
 
 void Game::Init() {

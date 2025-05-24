@@ -33,6 +33,8 @@ void Load(int index, unsigned int width, unsigned int height);
 	std::unordered_set<std::string> loadedTextureNames;
 	std::unordered_set<std::string> loadedShaderNames;
 	std::vector<std::unique_ptr<TileMap>> tileLayers;
+	std::shared_ptr<Shader> debugShader_;
+	bool debugMode_ = true;
 
 
 

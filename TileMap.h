@@ -21,7 +21,7 @@ public:
 	int GetTileWidth() const { return tileWidth_; }
 	int GetTileHeight() const { return tileHeight_; }
 	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
-	void DrawDebugGrid(const glm::mat4& projection);
+	void DrawDebugGrid(const glm::mat4& projection, std::shared_ptr<Shader> debugShader);
 
 	void Destroy();
 
