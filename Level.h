@@ -20,6 +20,8 @@ void Load(int index, unsigned int width, unsigned int height);
 	void Render(const glm::mat4& proj);    // Draw tilemap + enemies
 	void ProcessInput(float dt, const bool* keys);
 	const glm::mat4& GetProjection() const { return projection_; }
+	float GetInternalWidth() const { return internalWidth; }
+	float GetInternalHeight() const { return internalHeight; }
 
 
 
@@ -27,8 +29,9 @@ void Load(int index, unsigned int width, unsigned int height);
 	std::vector<std::unique_ptr<Enemy>> enemies;
 	std::unordered_set<int> solidTiles;
 	Dog* dog_;
-	static constexpr float INTERNAL_WIDTH  = 496.0f;
-	static constexpr float INTERNAL_HEIGHT = 272.0f;
+	float internalWidth = 496.0f;
+	float internalHeight = 272.0f;
+
 	glm::mat4 projection_;
 
 };

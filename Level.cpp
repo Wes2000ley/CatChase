@@ -25,7 +25,6 @@ void Level::Unload() {
 }
 void Level::Load(int index, unsigned int width, unsigned int height) {
 	Unload();
-	projection_ = glm::ortho(0.0f, INTERNAL_WIDTH, INTERNAL_HEIGHT, 0.0f);
 
 	// 🔼 Load level JSON
 	std::string path = "resources/levels/level" + std::to_string(index) + ".json";
@@ -36,6 +35,13 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	}
 	json data;
 	file >> data;
+
+	// Get internal resolution from JSON (optional)
+	internalWidth  = data.value("internalWidth", 496.0f);
+	internalHeight = data.value("internalHeight", 272.0f);
+
+	// Set up projection
+	projection_ = glm::ortho(0.0f, internalWidth, internalHeight, 0.0f);
 
 	// ✅ Load all shaders
 	for (auto& [name, shaderInfo] : data["resources"]["shaders"].items()) {

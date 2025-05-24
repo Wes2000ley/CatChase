@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # === CONFIGURATION ===
 INPUT_JSON = "input.json"
-INPUT_IMAGE = "C:\\Users\\Skyri\\CLionProjects\\Game\\resources\\textures\\DesertTilemap16x16.png"
+INPUT_IMAGE = "C:\\Users\\Skyri\\CLionProjects\\Game\\resources\\textures\\punyworld-overworld-tileset.png"
 OUTPUT_IMAGE = "overlay_output.png"
 
 TILE_WIDTH = 16
@@ -20,15 +20,28 @@ with open(INPUT_JSON, "r") as f:
     data = json.load(f)
 
 # === Auto-detect tiles ===
+tiles = {}
+
 if "tiles" in data:
     print("🔍 Detected flat Pixlab format.")
     tiles = data["tiles"]
+
 elif "tilesetEditing" in data:
     try:
-        tiles = data["tilesetEditing"][0]["layers"][0]["tiles"]
+        raw_tiles = data["tilesetEditing"][0]["layers"][0]["tiles"]
         print("🔍 Detected nested Pixlab project format.")
+        tiles = {f"{tile['x']}-{tile['y']}": {"x": tile["x"], "y": tile["y"]} for tile in raw_tiles}
     except (KeyError, IndexError):
         raise RuntimeError("⚠️ Could not locate tile data in tilesetEditing structure.")
+
+elif "layers" in data:
+    try:
+        raw_tiles = data["layers"][0]["tiles"]
+        print("🔍 Detected custom layer format.")
+        tiles = {f"{tile['x']}-{tile['y']}": {"id": int(tile["id"]), "x": tile["x"], "y": tile["y"]} for tile in raw_tiles}
+    except (KeyError, IndexError):
+        raise RuntimeError("⚠️ Could not parse layer format.")
+
 else:
     raise RuntimeError("❌ Unknown tilemap format.")
 
@@ -41,7 +54,10 @@ for key, tile in tiles.items():
         continue
     try:
         gx, gy = map(int, key.split('-'))
-        tile_id = tile["y"] * tiles_per_row + tile["x"]
+        if "id" in tile:
+            tile_id = tile["id"]
+        else:
+            tile_id = tile["y"] * tiles_per_row + tile["x"]
         grid[gy][gx] = tile_id
         max_x = max(max_x, gx)
         max_y = max(max_y, gy)
@@ -87,7 +103,7 @@ for y in range(max_y + 1):
         tile_region = tile_region.resize((TILE_WIDTH * SCALE, TILE_HEIGHT * SCALE), Image.NEAREST)
         overlay_image.paste(tile_region, (dest_x, dest_y))
 
-        # Draw ID text
+        # Draw tile ID
         label = str(tile_id)
         bbox = draw.textbbox((0, 0), label, font=font)
         text_w = bbox[2] - bbox[0]
