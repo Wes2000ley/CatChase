@@ -1,4 +1,22 @@
 {
+  "resources": {
+    "shaders": {
+      "sprite": {
+        "vert": "resources/shaders/sprite.vert",
+        "frag": "resources/shaders/sprite.frag"
+      },
+      "grid": {
+        "vert": "resources/shaders/line.vert",
+        "frag": "resources/shaders/line.frag"
+      }
+    },
+    "textures": {
+      "dog": "resources/textures/48DogSpriteSheet.png",
+      "slime": "resources/textures/Slime.png",
+      "skeleton": "resources/textures/Skeleton.png",
+      "tilemap": "resources/textures/DesertTilemap16x16.png"
+    }
+  },
   "tilemapTexture": "resources/textures/DesertTilemap16x16.png",
   "tileSize": { "width": 16, "height": 16 },
   "levelSize": { "width": 224, "height": 240 },

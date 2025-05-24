@@ -27,15 +27,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	Unload();
 	projection_ = glm::ortho(0.0f, INTERNAL_WIDTH, INTERNAL_HEIGHT, 0.0f);
 
-	// Load shaders and other resources
-	ResourceManager::LoadShader("resources/shaders/sprite.vert", "resources/shaders/sprite.frag", nullptr, "sprite");
-	ResourceManager::LoadShader("resources/shaders/line.vert", "resources/shaders/line.frag", nullptr, "grid");
-	ResourceManager::LoadTexture("resources/textures/48DogSpriteSheet.png", true, "dog");
-	ResourceManager::LoadTexture("resources/textures/Slime.png", true, "slime");
-	ResourceManager::LoadTexture("resources/textures/Skeleton.png", true, "skeleton");
-	Shader shader = ResourceManager::GetShader("sprite");
-
-	// 🔼 FIRST read the JSON file
+	// 🔼 Load level JSON
 	std::string path = "resources/levels/level" + std::to_string(index) + ".json";
 	std::ifstream file(path);
 	if (!file) {
@@ -45,40 +37,53 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	json data;
 	file >> data;
 
-	// ✅ NOW safe to access the JSON contents
-	std::string texturePath = data.value("tilemapTexture", "resources/textures/DesertTilemap16x16.png");
+	// ✅ Load all shaders
+	for (auto& [name, shaderInfo] : data["resources"]["shaders"].items()) {
+		ResourceManager::LoadShader(
+			shaderInfo["vert"].get<std::string>().c_str(),
+			shaderInfo["frag"].get<std::string>().c_str(),
+			nullptr,
+			name.c_str()
+		);
+	}
+
+	// ✅ Load all textures
+	for (auto& [name, path] : data["resources"]["textures"].items()) {
+		ResourceManager::LoadTexture(path.get<std::string>().c_str(), true, name.c_str());
+	}
+
+	// ✅ Use loaded shader + tilemap texture
+	Shader shader = ResourceManager::GetShader("sprite");
+	Texture2D tileTex = ResourceManager::GetTexture("tilemap");
+
+	// ✅ TileMap setup
 	int tileWidth = data["tileSize"].value("width", 16);
 	int tileHeight = data["tileSize"].value("height", 16);
 	int mapWidth = data["levelSize"].value("width", 224);
 	int mapHeight = data["levelSize"].value("height", 240);
-
-	ResourceManager::LoadTexture(texturePath.c_str(), true, "TileMap");
-	Texture2D tileTex = ResourceManager::GetTexture("TileMap");
-
 	tileMap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
+	// ✅ Text renderer from JSON
 	TextRenderer* textRenderer = new TextRenderer(width, height);
 	std::string fontPath = data["font"].value("path", "resources/fonts/OCRAEXT.TTF");
 	int fontSize = data["font"].value("size", 15);
 	textRenderer->Load(fontPath, fontSize);
 	tileMap->SetTextRenderer(textRenderer);
 
-	// Load tilemap
-	std::vector<std::vector<int>> tileData = data["tilemap"];
-	tileMap->Load(tileData);
-
-	// Solid tiles
+	// ✅ Load tilemap and solid tiles
+	tileMap->Load(data["tilemap"]);
 	for (int tileID : data["solid"]) solidTiles.insert(tileID);
 
-	// Player
-	float px = data["player"]["x"];
-	float py = data["player"]["y"];
-	float pscale = data["player"].value("scale", 0.6f);
+	// ✅ Player
+	auto& playerData = data["player"];
+	float px = playerData["x"];
+	float py = playerData["y"];
+	float pscale = playerData.value("scale", 0.6f);
 	Texture2D dogTexture = ResourceManager::GetTexture("dog");
 	dog_ = new Dog(shader, dogTexture, glm::vec2(px, py), glm::ivec2(1, 0));
 	dog_->SetScale(pscale);
 
-	// Enemies
+	// ✅ Enemies
 	for (auto& enemyData : data["enemies"]) {
 		std::string type = enemyData["type"];
 		float x = enemyData["x"];
@@ -89,14 +94,19 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 		float fh = enemyData["frameH"];
 		int frames = enemyData["frameCount"];
 		int speed = enemyData["animSpeed"];
-		float scale = enemyData.value("scale", 1.0f);  // fixed syntax
+		float scale = enemyData.value("scale", 1.0f);
+		std::string textureName = enemyData.value("texture", type);
+		std::string shaderName = enemyData.value("shader", "sprite");
+
+		Shader enemyShader = ResourceManager::GetShader(shaderName);
+		Texture2D enemyTexture = ResourceManager::GetTexture(textureName);
 
 		std::unique_ptr<Enemy> enemy;
 		if (type == "slime") {
-			enemy = std::make_unique<SlimeEnemy>(shader, ResourceManager::GetTexture("slime"),
+			enemy = std::make_unique<SlimeEnemy>(enemyShader, enemyTexture,
 				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
 		} else if (type == "skeleton") {
-			enemy = std::make_unique<SkeletonEnemy>(shader, ResourceManager::GetTexture("skeleton"),
+			enemy = std::make_unique<SkeletonEnemy>(enemyShader, enemyTexture,
 				glm::vec2(x, y), glm::ivec2(fx, fy), fw, fh, frames, speed);
 		}
 
@@ -106,6 +116,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 		}
 	}
 }
+
 
 
 void Level::Update(float dt) {
