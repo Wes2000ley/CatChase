@@ -1,6 +1,7 @@
 #include "TileMap.h"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <utility>
 
 
 #include "Dog.h"
@@ -9,10 +10,10 @@
 
 unsigned int TileMap::quadVAO_ = 0;
 
-TileMap::TileMap(Shader& shader, Texture2D& tileset,
+TileMap::TileMap(std::shared_ptr<Shader> shader, std::shared_ptr<Texture2D> tileset,
                  int textureWidth, int textureHeight,
                  int tileWidth, int tileHeight)
-    : shader_(shader), tileset_(tileset),
+    : shader_(std::move(shader)), tileset_(std::move(tileset)),
       tileWidth_(tileWidth), tileHeight_(tileHeight)
 {
     tilesPerRow_ = textureWidth / tileWidth_;
@@ -29,9 +30,9 @@ void TileMap::Load(const std::vector<std::vector<int>>& mapData) {
 
 void TileMap::Draw(const glm::mat4& projection)
 {
-    shader_.Use();
-    shader_.SetMatrix4("projection", projection);
-    tileset_.Bind();
+    shader_->Use();
+    shader_->SetMatrix4("projection", projection);
+    tileset_->Bind();
     glBindVertexArray(quadVAO_);
 
     int mapCols = mapData_[0].size();
@@ -53,8 +54,8 @@ void TileMap::Draw(const glm::mat4& projection)
             glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
             model = glm::scale(model, glm::vec3(tileWidth_, tileHeight_, 1.0f));
 
-            shader_.SetMatrix4("model", model);
-            shader_.SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
+            shader_->SetMatrix4("model", model);
+            shader_->SetVector4f("uvRect", glm::vec4(uvOffset, uvSize));
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }

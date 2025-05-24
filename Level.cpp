@@ -81,7 +81,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 	int tileHeight = data["tileSize"].value("height", 16);
 	int mapWidth = data["levelSize"].value("width", 224);
 	int mapHeight = data["levelSize"].value("height", 240);
-	tileMap = std::make_unique<TileMap>(*shader, *tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
+	tileMap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
 
 	// ✅ Text renderer from JSON
 	TextRenderer* textRenderer = new TextRenderer(width, height);

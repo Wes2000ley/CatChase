@@ -9,9 +9,10 @@
 
 class TileMap {
 public:
-	TileMap(Shader& shader, Texture2D& tileset,
-			int textureWidth, int textureHeight,
-			int tileWidth, int tileHeight);
+	TileMap(std::shared_ptr<Shader> shader,
+		std::shared_ptr<Texture2D> tileset,
+		int textureWidth, int textureHeight,
+		int tileWidth, int tileHeight);
 
 	void Load(const std::vector<std::vector<int>>& mapData);
 	void Draw(const glm::mat4 & projection);
@@ -23,8 +24,8 @@ public:
 	void SetTextRenderer(TextRenderer* renderer) { textRenderer_ = renderer; }
 
 private:
-	Shader shader_;
-	Texture2D tileset_;
+	std::shared_ptr<Shader> shader_;
+	std::shared_ptr<Texture2D> tileset_;
 	int textureWidth_{}, textureHeight_{};
 	int tileWidth_, tileHeight_;
 	std::vector<std::vector<int>> mapData_;
