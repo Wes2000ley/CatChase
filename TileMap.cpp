@@ -161,8 +161,12 @@ void TileMap::SetTextRenderer(std::shared_ptr<TextRenderer> text) {
 }
 
 void TileMap::Destroy() {
-    if (quadVAO_ != 0) {
-        glDeleteVertexArrays(1, &quadVAO_);
-        quadVAO_ = 0;
+    if (gridVBO_) {
+        glDeleteBuffers(1, &gridVBO_);
+        gridVBO_ = 0;
+    }
+    if (gridVAO_) {
+        glDeleteVertexArrays(1, &gridVAO_);
+        gridVAO_ = 0;
     }
 }

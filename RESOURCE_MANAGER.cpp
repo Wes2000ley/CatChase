@@ -8,26 +8,28 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// Instantiate static variables
+// Static maps
 std::unordered_map<std::string, std::shared_ptr<Texture2D>> ResourceManager::Textures;
 std::unordered_map<std::string, std::shared_ptr<Shader>>    ResourceManager::Shaders;
 std::map<std::string, std::shared_ptr<TextRenderer>>        ResourceManager::TextRenderers;
-static std::unordered_map<std::string, std::string>         texturePaths;
+
+// Track file paths for reload detection
+static std::unordered_map<std::string, std::string> texturePaths;
+static std::unordered_map<std::string, std::pair<std::string, std::string>> shaderPaths;
 
 std::shared_ptr<Texture2D> ResourceManager::LoadTexture(const char* file, bool alpha, const std::string& name) {
     std::string newPath = file;
 
-    if (Textures.find(name) != Textures.end()) {
+    auto it = Textures.find(name);
+    if (it != Textures.end()) {
         if (texturePaths[name] == newPath)
-            return Textures[name]; // same file, skip reload
-    }
+            return it->second; // same path, already loaded
 
-    texturePaths[name] = newPath;
-
-    auto texture = std::make_shared<Texture2D>();
-    if (alpha) {
-        texture->Internal_Format = GL_RGBA;
-        texture->Image_Format = GL_RGBA;
+        // 🧹 Different file: delete old texture
+        if (it->second && it->second->ID)
+            glDeleteTextures(1, &it->second->ID);
+        Textures.erase(it);
+        texturePaths.erase(name);
     }
 
     int width, height, nrChannels;
@@ -37,28 +39,52 @@ std::shared_ptr<Texture2D> ResourceManager::LoadTexture(const char* file, bool a
         return nullptr;
     }
 
+    auto texture = std::make_shared<Texture2D>();
+    if (alpha) {
+        texture->Internal_Format = GL_RGBA;
+        texture->Image_Format = GL_RGBA;
+    }
+
     texture->Generate(width, height, data);
     stbi_image_free(data);
-    Textures[name] = texture;
 
+    Textures[name] = texture;
+    texturePaths[name] = newPath;
     return texture;
 }
 
 std::shared_ptr<Shader> ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, const std::string& name) {
+    std::string vsPath = vShaderFile;
+    std::string fsPath = fShaderFile;
+
+    auto it = Shaders.find(name);
+    if (it != Shaders.end()) {
+        auto& [oldVS, oldFS] = shaderPaths[name];
+        if (oldVS == vsPath && oldFS == fsPath)
+            return it->second; // same shader files
+
+        // 🧹 Different files: delete old program
+        if (it->second && it->second->ID)
+            glDeleteProgram(it->second->ID);
+        Shaders.erase(it);
+        shaderPaths.erase(name);
+    }
+
     auto shader = std::make_shared<Shader>();
     *shader = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
     Shaders[name] = shader;
+    shaderPaths[name] = {vsPath, fsPath};
     return shader;
 }
 
-std::shared_ptr<Texture2D> ResourceManager::GetTexture(const std::string &name) {
+std::shared_ptr<Texture2D> ResourceManager::GetTexture(const std::string& name) {
     auto it = Textures.find(name);
     if (it != Textures.end()) return it->second;
     std::cerr << "⚠️ Texture not found: " << name << std::endl;
     return nullptr;
 }
 
-std::shared_ptr<Shader> ResourceManager::GetShader(const std::string &name) {
+std::shared_ptr<Shader> ResourceManager::GetShader(const std::string& name) {
     auto it = Shaders.find(name);
     if (it != Shaders.end()) return it->second;
     std::cerr << "⚠️ Shader not found: " << name << std::endl;
@@ -66,18 +92,21 @@ std::shared_ptr<Shader> ResourceManager::GetShader(const std::string &name) {
 }
 
 void ResourceManager::Clear() {
-    for (auto& [name, shader] : Shaders)
-        if (shader && shader->ID) glDeleteProgram(shader->ID);
-    for (auto& [name, texture] : Textures)
-        if (texture && texture->ID) glDeleteTextures(1, &texture->ID);
+    for (auto& [_, shader] : Shaders)
+        if (shader && shader->ID)
+            glDeleteProgram(shader->ID);
+    for (auto& [_, texture] : Textures)
+        if (texture && texture->ID)
+            glDeleteTextures(1, &texture->ID);
 
     Shaders.clear();
     Textures.clear();
     TextRenderers.clear();
     texturePaths.clear();
+    shaderPaths.clear();
 }
 
-Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
+Shader ResourceManager::loadShaderFromFile(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile) {
     std::string vertexCode, fragmentCode, geometryCode;
 
     try {
@@ -88,22 +117,17 @@ Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *
         vShaderStream << vertexShaderFile.rdbuf();
         fShaderStream << fragmentShaderFile.rdbuf();
 
-        vertexShaderFile.close();
-        fragmentShaderFile.close();
-
         vertexCode = vShaderStream.str();
         fragmentCode = fShaderStream.str();
 
-        if (gShaderFile != nullptr) {
+        if (gShaderFile) {
             std::ifstream geometryShaderFile(gShaderFile);
             std::stringstream gShaderStream;
             gShaderStream << geometryShaderFile.rdbuf();
-            geometryShaderFile.close();
             geometryCode = gShaderStream.str();
         }
-    }
-    catch (std::exception& e) {
-        std::cerr << "ERROR::SHADER: Failed to read shader files: " << e.what() << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "❌ ERROR::SHADER: Failed to read files: " << e.what() << std::endl;
     }
 
     Shader shader;
@@ -133,6 +157,7 @@ void ResourceManager::UnloadTexture(const std::string& name) {
         if (it->second && it->second->ID)
             glDeleteTextures(1, &it->second->ID);
         Textures.erase(it);
+        texturePaths.erase(name);
     }
 }
 
@@ -142,5 +167,6 @@ void ResourceManager::UnloadShader(const std::string& name) {
         if (it->second && it->second->ID)
             glDeleteProgram(it->second->ID);
         Shaders.erase(it);
+        shaderPaths.erase(name);
     }
 }
