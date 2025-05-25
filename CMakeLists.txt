@@ -15,14 +15,6 @@ find_package(nlohmann_json REQUIRED)
 # Optional: Static linking settings (Windows-specific)
 set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
 
-# ✅ RmlUi Integration
-# Make sure you've cloned the official repo into deps/RmlUi or deps/RmlUi-6.1
-# and that it includes the top-level CMakeLists.txt
-add_subdirectory(deps/RmlUi-6.1)
-
-# Optional: You can specify include dirs if needed
-# target_include_directories(Game PRIVATE deps/RmlUi/Include)
-
 # ✅ Game Executable
 add_executable(Game
         main.cpp
@@ -41,6 +33,7 @@ add_executable(Game
         PauseMenu.cpp PauseMenu.h
         EnemyRegistry.cpp EnemyRegistry.h
         DebugDraw.cpp DebugDraw.h
+
 )
 
 # ✅ Link libraries
@@ -53,7 +46,6 @@ target_link_libraries(Game
         Freetype::Freetype
         nlohmann_json::nlohmann_json
 
-        RmlUi::RmlUi
 )
 
 # ✅ Copy resources folder to build dir
