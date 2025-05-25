@@ -111,96 +111,117 @@ void Game::HandlePauseMenuSelection(PauseMenu::Option opt, GLFWwindow* window) {
 	}
 }
 void Game::RenderUI() {
-	if (!GUI) return;
+	if (!GUI || !pauseMenu.IsActive()) return;
 
 	struct nk_context* ctx = GUI->GetContext();
-	if (!pauseMenu.IsActive()) return;
-
-	// Get current window size (so Nuklear scales correctly)
 	glfwGetFramebufferSize(glfwGetCurrentContext(), (int*)&Width, (int*)&Height);
 
-	// Dynamic size: 30% width, 40% height
-	float menuWidth = Width * 0.3f;
-	float menuHeight = Height * 0.4f;
-
-	// Centered position
+	// Window sizing
+	float menuWidth  = Width * 0.35f;
+	float menuHeight = Height * 0.45f;
 	float menuX = (Width - menuWidth) / 2.0f;
 	float menuY = (Height - menuHeight) / 2.0f;
 
-	// Level selector content
+	// Level selector state
 	static int selectedLevel = 0;
 	static const char* levels[] = { "Level 1", "Level 2", "Level 3" };
-	static int numLevels = sizeof(levels) / sizeof(levels[0]);
+	static const int numLevels = sizeof(levels) / sizeof(levels[0]);
+
+	// Load UI textures
+	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 1 - 1080p.png",true,"panel_bg");
+	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 8 - 1080p.png",  true, "btn_idle");
+	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 2 - 1080p.png", true, "btn_hover");
+	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 2 - 1080p.png", true, "btn_active");
+
+	auto panelTex  = ResourceManager::GetTexture("panel_bg");
+	auto btnIdle   = ResourceManager::GetTexture("btn_idle");
+	auto btnHover  = ResourceManager::GetTexture("btn_hover");
+	auto btnActive = ResourceManager::GetTexture("btn_active");
+
+	nk_style backup = ctx->style;
+
+	// === 🪟 Panel background ===
+	ctx->style.window.fixed_background = nk_style_item_image(nk_image_id(panelTex->ID));
+	ctx->style.window.border = 0;
+	ctx->style.window.padding = nk_vec2(20, 20);
+	ctx->style.window.rounding = 0;
+	ctx->style.window.border_color = nk_rgb(0, 0, 0);
+
+	// === 🟥 Button styling ===
+	ctx->style.button.normal  = nk_style_item_image(nk_image_id(btnIdle->ID));
+	ctx->style.button.hover   = nk_style_item_image(nk_image_id(btnHover->ID));
+	ctx->style.button.active  = nk_style_item_image(nk_image_id(btnActive->ID));
+	ctx->style.button.border_color = nk_rgba(0, 0, 0, 0);
+	ctx->style.button.text_background = nk_rgba(0, 0, 0, 0);
+	ctx->style.button.text_normal = nk_rgb(255, 240, 200);
+	ctx->style.button.text_hover = nk_rgb(255, 255, 255);
+	ctx->style.button.text_active = nk_rgb(255, 255, 150);
+	ctx->style.button.padding = nk_vec2(8, 6);
+	ctx->style.button.rounding = 0;
 
 
+	// === 🔽 Combo/Dropdown styling ===
+	ctx->style.combo.normal  = nk_style_item_image(nk_image_id(btnIdle->ID));
+	ctx->style.combo.hover   = nk_style_item_image(nk_image_id(btnHover->ID));
+	ctx->style.combo.active  = nk_style_item_image(nk_image_id(btnActive->ID));
 
-nk_style backup = ctx->style;
+	ctx->style.combo.border_color = nk_rgba(0, 0, 0, 0);
+	ctx->style.combo.label_normal = nk_rgb(255, 240, 200);
+	ctx->style.combo.label_hover = nk_rgb(255, 255, 255);
+	ctx->style.combo.label_active = nk_rgb(255, 255, 150);
 
-	// Apply styling (colors and padding)
-	nk_style *style = &ctx->style;
-
-	// Set window background and border
-	style->window.fixed_background = nk_style_item_color(nk_rgba(20, 20, 20, 220)); // dark semi-transparent
-	style->window.border_color = nk_rgb(80, 80, 80);
-	style->window.rounding = 10;
-	style->window.border = 2.0f;
-	style->window.padding = nk_vec2(15, 15);
-
-	// Set button appearance
-	style->button.normal = nk_style_item_color(nk_rgb(50, 50, 50));
-	style->button.hover = nk_style_item_color(nk_rgb(70, 70, 70));
-	style->button.active = nk_style_item_color(nk_rgb(90, 90, 90));
-	style->button.border_color = nk_rgb(120, 120, 120);
-	style->button.text_background = nk_rgb(0, 0, 0);
-	style->button.text_normal = nk_rgb(230, 230, 230);
-	style->button.text_hover = nk_rgb(255, 255, 255);
-	style->button.text_active = nk_rgb(255, 255, 200);
-
-	style->button.border = 1.0f;
-	style->button.rounding = 6;
-	style->button.padding = nk_vec2(8, 4);
-
-	// Label font color
-	style->text.color = nk_rgb(240, 240, 240);
+	ctx->style.combo.border = 0.0f;
+	ctx->style.combo.rounding = 0;
+	ctx->style.combo.content_padding = nk_vec2(8, 6);
+	ctx->style.combo.button_padding = nk_vec2(4, 4);
+	ctx->style.combo.spacing = nk_vec2(4, 4);
 
 
-	if (nk_begin(ctx, "Pause Menu", nk_rect(menuX, menuY, menuWidth, menuHeight),
-	             NK_WINDOW_BORDER | NK_WINDOW_TITLE)) {
-		nk_layout_row_dynamic(ctx, 35, 1);
-		nk_label(ctx, "Game Paused", NK_TEXT_CENTERED);
+if (nk_begin(ctx, "", nk_rect(menuX, menuY, menuWidth, menuHeight),
+             NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_NO_INPUT)) {
+	// Resume button
+	nk_layout_row_dynamic(ctx, 128, 1);
+	if (nk_button_label(ctx, "▶ Resume")) {
+		isPaused = false;
+		pauseMenu.SetActive(false);
+	}
 
-		nk_spacing(ctx, 1);
+	// Small spacer
+	nk_layout_row_static(ctx, 12, 1, 1); // 12px vertical gap
 
-		if (nk_button_label(ctx, "▶ Resume")) {
-			isPaused = false;
-			pauseMenu.SetActive(false);
-		}
+	// Label + dropdown
+	nk_layout_row_dynamic(ctx, 128, 1);
+	nk_label(ctx, "Change Level:", NK_TEXT_LEFT);
 
-		nk_spacing(ctx, 1);
-
-		nk_label(ctx, "Change Level:", NK_TEXT_LEFT);
-		if (nk_combo_begin_label(ctx, levels[selectedLevel], nk_vec2(menuWidth - 40.0f, 150))) {
-			nk_layout_row_dynamic(ctx, 25, 1);
-			for (int i = 0; i < numLevels; ++i) {
-				if (nk_combo_item_label(ctx, levels[i], NK_TEXT_LEFT)) {
-					selectedLevel = i;
-					levelManager_.LoadLevel(i, Width, Height);
-					isPaused = false;
-					pauseMenu.SetActive(false);
-				}
+	nk_layout_row_dynamic(ctx, 128, 1); // Combo box as tall as buttons
+	if (nk_combo_begin_label(ctx, levels[selectedLevel], nk_vec2(menuWidth - 40.0f, 100.0f))) {
+		nk_layout_row_dynamic(ctx, 32, 1); // height of combo items
+		for (int i = 0; i < numLevels; ++i) {
+			if (nk_combo_item_label(ctx, levels[i], NK_TEXT_LEFT)) {
+				selectedLevel = i;
+				levelManager_.LoadLevel(i, Width, Height);
+				isPaused = false;
+				pauseMenu.SetActive(false);
 			}
-			nk_combo_end(ctx);
 		}
+		nk_combo_end(ctx);
+	}
 
-		nk_spacing(ctx, 1);
+	// Small spacer
+	nk_layout_row_static(ctx, 12, 1, 1);
 
-		if (nk_button_label(ctx, "⏻ Quit")) {
-			glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
-		}
+	// Quit button
+	nk_layout_row_dynamic(ctx, 128, 1);
+	if (nk_button_label(ctx, "⏻ Quit Game")) {
+		glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+	}
+
 	}
 	nk_end(ctx);
+
 	ctx->style = backup;
 }
+
 
 void Game::SetUIRenderer(NuklearRenderer *gui) {
 	GUI = gui;
