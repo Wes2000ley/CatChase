@@ -13,6 +13,7 @@
 #include "LevelManager.h"
 #include "TEXT_RENDERER.h"
 
+
 #include "PauseMenu.h"
 PauseMenu pauseMenu;
 bool isPaused = false;
@@ -37,6 +38,7 @@ void Game::Init() {
     srand(static_cast<unsigned>(time(nullptr)));
     ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
     ResourceManager::LoadShader("resources/shaders/box.vert", "resources/shaders/box.frag", nullptr, "box");
+	GUI = new NuklearRenderer(glfwGetCurrentContext()); // or pass `window` if you store it
 
 
     // Global TextRenderer
@@ -119,4 +121,29 @@ void Game::HandlePauseMenuSelection(PauseMenu::Option opt, GLFWwindow* window) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 			break;
 	}
+}
+void Game::RenderUI() {
+	if (!GUI) return;
+
+	struct nk_context* ctx = GUI->GetContext();
+	if (pauseMenu.IsActive()) {
+		if (nk_begin(ctx, "Pause Menu", nk_rect(50, 50, 220, 200),
+					 NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE)) {
+			nk_layout_row_dynamic(ctx, 30, 1);
+			if (nk_button_label(ctx, "Resume")) {
+				isPaused = false;
+				pauseMenu.SetActive(false);
+			}
+			if (nk_button_label(ctx, "Change Level")) {
+				// You can pop a submenu here
+			}
+			if (nk_button_label(ctx, "Quit")) {
+				glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+			}
+					 }
+		nk_end(ctx);
+	}
+}
+void Game::SetUIRenderer(NuklearRenderer* gui) {
+	GUI = gui;
 }

@@ -11,9 +11,12 @@ find_package(cglm REQUIRED)
 find_package(glm REQUIRED)
 find_package(freetype REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(nuklear)
 
 # Optional: Static linking settings (Windows-specific)
-set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+if (Win32)
+    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+endif ()
 
 # ✅ Game Executable
 add_executable(Game
@@ -33,6 +36,8 @@ add_executable(Game
         PauseMenu.cpp PauseMenu.h
         EnemyRegistry.cpp EnemyRegistry.h
         DebugDraw.cpp DebugDraw.h
+        NuklearRenderer.cpp
+        NuklearRenderer.h
 
 )
 
@@ -45,7 +50,7 @@ target_link_libraries(Game
         glm::glm
         Freetype::Freetype
         nlohmann_json::nlohmann_json
-
+        nuklear::nuklear
 )
 
 # ✅ Copy resources folder to build dir

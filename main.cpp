@@ -3,38 +3,36 @@
 
 #include "game.h"
 #include "resource_manager.h"
+#include "NuklearRenderer.h"
 
 #include <iostream>
-
 
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
 #endif
 
-// GLFW function declarations
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
-// The Width of the screen
+// Screen dimensions
 const unsigned int SCREEN_WIDTH = 1920;
-// The height of the screen
 const unsigned int SCREEN_HEIGHT = 1080;
 
+// Global Game instance
 Game CatChase(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-int main(int argc, char *argv[])
-{
+// Callbacks
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
-    // ✅ Fix working directory on Windows
     char path[MAX_PATH];
     GetModuleFileNameA(NULL, path, MAX_PATH);
     std::string exePath(path);
     exePath = exePath.substr(0, exePath.find_last_of("\\/"));
-    _chdir(exePath.c_str());  // changes process working directory
+    _chdir(exePath.c_str());
 #endif
 
+    // Initialize GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -45,81 +43,67 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "CatChase", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "❌ Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
     glfwMakeContextCurrent(window);
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "❌ Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
     glfwSetKeyCallback(window, key_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // OpenGL configuration
-    // --------------------
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glfwWindowHint(GLFW_RED_BITS, 8);
-    glfwWindowHint(GLFW_GREEN_BITS, 8);
-    glfwWindowHint(GLFW_BLUE_BITS, 8);
-    glfwWindowHint(GLFW_ALPHA_BITS, 8);
+
+    // Initialize Nuklear
+    NuklearRenderer nuklearGui(window);
+
+    // Pass GUI to Game
 
 
-    // initialize game
-    // ---------------
+    // Initialize game
     CatChase.Init();
 
-    // deltaTime variables
-    // -------------------
+    CatChase.SetUIRenderer(&nuklearGui);
+
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    while (!glfwWindowShouldClose(window))
-    {
-        // calculate delta time
-        // --------------------
+    while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
         glfwPollEvents();
 
-        // manage user input
-        // -----------------
+        nuklearGui.BeginFrame();         // UI input
         CatChase.ProcessInput(window, deltaTime);
-
-        // update game state
-        // -----------------
         CatChase.Update(deltaTime);
 
-        // render
-        // ------
-        glClearColor(0.2f, 0.2f, 0.2f, .1f); // or some visible color
+        glClearColor(0.2f, 0.2f, 0.2f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         CatChase.Render();
+        CatChase.RenderUI();             // UI draw
+        nuklearGui.EndFrame();           // UI render
 
         glfwSwapBuffers(window);
     }
 
-    // delete all resources as loaded using the resource manager
-    // ---------------------------------------------------------
     ResourceManager::Clear();
-
     glfwTerminate();
     return 0;
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-    // when a user presses the escape key, we set the WindowShouldClose property to true, closing the application
-    // if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-    //     glfwSetWindowShouldClose(window, true);
-    if (key >= 0 && key < 1024)
-    {
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key >= 0 && key < 1024) {
         if (action == GLFW_PRESS)
             CatChase.Keys[key] = true;
         else if (action == GLFW_RELEASE)
@@ -127,8 +111,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
     CatChase.SetSize(width, height);
 }

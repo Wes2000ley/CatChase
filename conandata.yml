@@ -9,3 +9,4 @@ requirements:
   - "glad/0.1.36"
   - "glfw/3.3.8"
   - "opengl/system"
+  - "nuklear/4.12.0"

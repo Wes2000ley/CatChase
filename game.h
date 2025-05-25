@@ -18,6 +18,9 @@
 #include "LevelManager.h"
 #include "PauseMenu.h"
 
+#include "NuklearRenderer.h" // Forward-declared or included
+#include <nuklear.h>
+
 // Represents the current state of the game
 enum GameState {
 	GAME_ACTIVE,
@@ -46,12 +49,18 @@ public:
 	bool Keys[1024];
 	unsigned int Width, Height;
 
+	void RenderUI();  // new
+	void SetUIRenderer(NuklearRenderer* gui);
+
+
 private:
 	TileMap* TileMap_;
 	Dog* dog_;
 	Enemy* slime1_;
 	Enemy* skeleton1_;
 	LevelManager levelManager_;
+	NuklearRenderer* GUI = nullptr;
+
 };
 
 #endif
