@@ -21,6 +21,8 @@
 #include "NuklearRenderer.h" // Forward-declared or included
 #include <nuklear.h>
 
+#include "NineSliceRenderer.h"
+
 // Represents the current state of the game
 enum GameState {
 	GAME_ACTIVE,
@@ -51,6 +53,10 @@ public:
 
 	void RenderUI();  // new
 	void SetUIRenderer(NuklearRenderer* gui);
+	NuklearRenderer* GUI = nullptr;
+	NineSliceRenderer* panelRenderer = nullptr;
+	NineSliceRenderer* btnRenderer = nullptr;
+	NineSliceRenderer* btnHoverRenderer = nullptr;
 
 
 private:
@@ -59,8 +65,6 @@ private:
 	Enemy* slime1_;
 	Enemy* skeleton1_;
 	LevelManager levelManager_;
-	NuklearRenderer* GUI = nullptr;
-
 };
 
 #endif

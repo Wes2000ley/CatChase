@@ -66,7 +66,7 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
     // Load textures
     for (auto& [name, path] : data["resources"]["textures"].items()) {
-        ResourceManager::LoadTexture(path.get<std::string>().c_str(), true, name);
+        ResourceManager::LoadTexture(path.get<std::string>().c_str(), name);
         loadedTextureNames.insert(name);
     }
 

@@ -22,42 +22,32 @@ static std::unordered_map<std::string, std::string> texturePaths;
 static std::unordered_map<std::string, std::pair<std::string, std::string>> shaderPaths;
 
 // Load Texture2D
-std::shared_ptr<Texture2D> ResourceManager::LoadTexture(const char* file, bool alpha, const std::string& name) {
-    std::string newPath = file;
+std::shared_ptr<Texture2D>
+ResourceManager::LoadTexture(const char* file, const std::string& name)
+{
+    if (auto it = Textures.find(name); it != Textures.end())
+        return it->second;                                // cached
 
-    auto it = Textures.find(name);
-    if (it != Textures.end()) {
-        if (texturePaths[name] == newPath)
-            return it->second;
+    stbi_uc* data = nullptr;
+    int w = 0, h = 0, _ = 0;
 
-        if (it->second && it->second->ID != 0)
-            glDeleteTextures(1, &it->second->ID);
-
-        Textures.erase(it);
-        texturePaths.erase(name);
-    }
-
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
+    // Force stb to output 4 channels so GL_RGBA always matches.
+    data = stbi_load(file, &w, &h, &_, STBI_rgb_alpha);
     if (!data) {
-        std::cerr << "❌ Failed to load texture: " << file << std::endl;
+        std::cerr << "❌ Failed to load texture: " << file << '\n';
         return nullptr;
     }
 
-    auto texture = std::make_shared<Texture2D>();
-    if (alpha) {
-        texture->Internal_Format = GL_RGBA;
-        texture->Image_Format = GL_RGBA;
-    }
+    auto tex = std::make_shared<Texture2D>();
+    tex->Internal_Format = GL_RGBA;
+    tex->Image_Format    = GL_RGBA;
+    tex->Generate(static_cast<unsigned>(w),
+                  static_cast<unsigned>(h), data);
 
-    texture->Generate(width, height, data);
     stbi_image_free(data);
-
-    Textures[name] = texture;
-    texturePaths[name] = newPath;
-    return texture;
+    Textures.emplace(name, tex);
+    return tex;
 }
-
 // Load Shader
 std::shared_ptr<Shader> ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, const std::string& name) {
     std::string vsPath = vShaderFile;

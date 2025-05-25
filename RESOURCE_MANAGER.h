@@ -30,7 +30,7 @@ public:
     // retrieves a stored sader
     static std::shared_ptr<Shader> GetShader(const std::string &name);
     // loads (and generates) a texture from file
-    static std::shared_ptr<Texture2D> LoadTexture(const char *file, bool alpha, const std::string &name);
+    static std::shared_ptr<Texture2D> LoadTexture(const char *file, const std::string &name);
     // retrieves a stored texture
     static std::shared_ptr<Texture2D> GetTexture(const std::string &name);
     // properly de-allocates all loaded resources
