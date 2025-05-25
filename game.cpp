@@ -133,6 +133,21 @@ void Game::RenderUI() {
 	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 2 - 1080p.png", true, "btn_hover");
 	ResourceManager::LoadTexture("resources/gui/Game Menu/1x/Asset 2 - 1080p.png", true, "btn_active");
 
+
+	/*
+
+
+	// During init:
+	auto buttonTex = ResourceManager::LoadTexture("resources/ui_button_9slice.png", true, "button9");
+	auto buttonShader = ResourceManager::LoadShader("resources/shaders/9slice.vert", "resources/shaders/9slice.frag", nullptr, "9slice");
+
+	NineSliceRenderer buttonRenderer(buttonShader);
+	buttonRenderer.SetTexture(buttonTex, 16);
+
+	// Inside Game::RenderUI()
+	buttonRenderer.Render(x, y, w, h);
+	*/
+
 	auto panelTex  = ResourceManager::GetTexture("panel_bg");
 	auto btnIdle   = ResourceManager::GetTexture("btn_idle");
 	auto btnHover  = ResourceManager::GetTexture("btn_hover");
