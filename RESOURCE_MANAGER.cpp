@@ -7,6 +7,9 @@
 #include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
+//#include <GL/gl.h>
+#include <glad/glad.h>
+
 #include "stb_image.h"
 
 // Static maps

@@ -1,6 +1,10 @@
 #include "PauseMenu.h"
 
 #include <functional>
+//#include <GL/gl.h>
+//#include <glad/glad.h>
+
+#include <glad/glad.h>
 
 #include "RESOURCE_MANAGER.h"
 #include "TEXT_RENDERER.h"

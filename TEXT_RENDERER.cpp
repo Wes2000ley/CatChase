@@ -3,6 +3,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <freetype2/ft2build.h>
+#include <glad/glad.h>
+
 #include FT_FREETYPE_H
 
 #include "text_renderer.h"

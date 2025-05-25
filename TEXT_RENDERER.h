@@ -12,7 +12,7 @@
 #include <map>
 #include <memory>
 
-#include <glad/glad.h>
+//#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include "TEXTURE.h"

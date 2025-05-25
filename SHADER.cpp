@@ -9,6 +9,7 @@
 #include "shader.h"
 
 #include <iostream>
+#include <glad/glad.h>
 
 Shader &Shader::Use()
 {
