@@ -58,7 +58,7 @@
       "frameCount": 6,
       "animSpeed": 3,
       "scale": 0.75,
-      "collisionScale": 0.7,
+      "collisionScale": 0.4,
       "texture": "slime",
       "shader": "sprite"
     },
@@ -73,7 +73,7 @@
       "frameCount": 6,
       "animSpeed": 10,
       "scale": 0.75,
-      "collisionScale": 0.1,
+      "collisionScale": 0.4,
       "texture": "skeleton",
       "shader": "sprite"
     }

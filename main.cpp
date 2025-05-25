@@ -6,6 +6,12 @@
 
 #include <iostream>
 
+#include <RmlUi/Core.h>
+#include <RmlUi/Debugger.h>
+//#include <RmlUi/Platform/GLFW/Include_GLFW.h>
+//#include <RmlUi/Render/GL/Include_GL3.h>
+
+
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h>

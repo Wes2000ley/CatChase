@@ -115,7 +115,7 @@ void Enemy::initRenderData()
 Circle Enemy::ComputeBoundingCircle() const {
     float width  = (sheetWidth_ / frameCols_) * manscale_;
     float height = (sheetHeight_ / frameRows_) * manscale_;
-    float radius = 0.5f * glm::length(glm::vec2(width, height));
+    float radius = 0.5f * glm::length(glm::vec2(width, height))* collisionScale_;
     glm::vec2 center = position_ + glm::vec2(width, height) * 0.5f;
     return { center, radius };
 }
