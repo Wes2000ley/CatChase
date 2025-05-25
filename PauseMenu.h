@@ -44,7 +44,7 @@ public:
 
 	int GetLevelCount() const { return static_cast<int>(levelNames_.size()); }
 	void SetSelectedLevel(int index) { selectedLevelIndex_ = index; }
-	void OnMouseMove(float x, float y);
+	void OnMouseMove(float mx, float my) ;
 	void OnMouseClick(float x, float y);
 	bool HandleInput(GLFWwindow* window, float dt,
 				 const std::function<void(Option)>& onMainSelect,
@@ -72,5 +72,14 @@ private:
 	float screenWidth_ = 1920.0f;
 	float screenHeight_ = 1080.0f;
 	std::vector<glm::vec2> levelOptionPositions_;
+
+	int hoveredIndex_ = -1; // -1 means no item hovered
+	int hoveredLevelIndex_ = -1;
+
+	// Padding factors for selection boxes
+	float SELECTION_PADDING_X = .5f;  // 50% of text width
+	float SELECTION_PADDING_Y = .5f;  // 50% of text height
+
+
 
 };

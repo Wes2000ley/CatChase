@@ -89,12 +89,12 @@ void PauseMenu::Render(float screenWidth, float screenHeight) {
             float x = centerX - optionWidth / 2.0f;
             float y = optionYStart + i * spacing;
 
-            glm::vec3 color = (i == selectedIndex_) ? glm::vec3(0.0f) : glm::vec3(1.0f);
+            glm::vec3 color = (i == hoveredIndex_) ? glm::vec3(0.0f) : glm::vec3(1.0f);
             RenderOption(label, x, y, scaleOption, color, projection, "default");
-            if (i == selectedIndex_) {
-                auto bounds = GetOptionBounds(i, screenWidth_, screenHeight_, scaleOption);
-                RenderSelectionBox(bounds.x, bounds.y, bounds.width, bounds.height, glm::vec4(1.0f, 0.0f, 0.0f, 0.3f), projection);
-            }
+            // if (i == selectedIndex_) {
+            //     auto bounds = GetOptionBounds(i, screenWidth_, screenHeight_, scaleOption);
+            //     RenderSelectionBox(bounds.x, bounds.y, bounds.width, bounds.height, glm::vec4(1.0f, 0.0f, 0.0f, 0.3f), projection);
+            // }
         }
     }
     else if (currentMode_ == Mode::LEVEL_SELECT) {
@@ -118,14 +118,14 @@ void PauseMenu::Render(float screenWidth, float screenHeight) {
             float x = centerX - optionWidth / 2.0f;
             float y = optionYStart + i * spacing;
 
-            levelOptionPositions_.push_back(glm::vec2(x, y));
+            levelOptionPositions_.emplace_back(x, y);
 
-            glm::vec3 color = (i == selectedLevelIndex_) ? glm::vec3(0.0f) : glm::vec3(1.0f);
+            glm::vec3 color = (i == hoveredLevelIndex_) ? glm::vec3(0.0f) : glm::vec3(1.0f);
             RenderOption(label, x, y, scaleOption, color, projection, "default");
-            if (i == selectedLevelIndex_) {
-                auto bounds = GetLevelBounds(i, screenWidth_, screenHeight_, scaleOption);
-                RenderSelectionBox(bounds.x, bounds.y, bounds.width, bounds.height, glm::vec4(1.0f, 0.0f, 0.0f, 0.3f), projection);
-            }
+            // if (i == selectedLevelIndex_) {
+            //     auto bounds = GetLevelBounds(i, screenWidth_, screenHeight_, scaleOption);
+            //     RenderSelectionBox(bounds.x, bounds.y, bounds.width, bounds.height, glm::vec4(1.0f, 0.0f, 0.0f, 0.3f), projection);
+            // }
 
         }
     }
@@ -156,14 +156,21 @@ PauseMenu::MenuOptionBounds PauseMenu::GetOptionBounds(int index, float screenWi
     float optionYStart = titleY + 100.0f;
     float y = optionYStart + index * spacing;
 
-    glm::vec4 bounds = text.MeasureRenderedTextBounds(label,
-                                                      centerX - text.MeasureTextWidth(label, scale) / 2.0f, y, scale);
+    glm::vec4 bounds = text.MeasureRenderedTextBounds(
+        label,
+        centerX - text.MeasureTextWidth(label, scale) / 2.0f,
+        y,
+        scale
+    );
+
+    float padX = bounds.z * SELECTION_PADDING_X;
+    float padY = bounds.w * SELECTION_PADDING_Y;
 
     return {
-        bounds.x,
-        bounds.y,
-        bounds.z,
-        bounds.w
+        bounds.x - padX,
+        bounds.y - padY,
+        bounds.z + padX * 2.0f,
+        bounds.w + padY * 2.0f
     };
 }
 
@@ -177,13 +184,18 @@ PauseMenu::MenuOptionBounds PauseMenu::GetLevelBounds(int index, float screenWid
     glm::vec2 pos = levelOptionPositions_[index];
 
     glm::vec4 bounds = text.MeasureRenderedTextBounds(label, pos.x, pos.y, scale);
+
+    float padX = bounds.z * SELECTION_PADDING_X;
+    float padY = bounds.w * SELECTION_PADDING_Y;
+
     return {
-        bounds.x,
-        bounds.y,
-        bounds.z,
-        bounds.w
+        bounds.x - padX,
+        bounds.y - padY,
+        bounds.z + padX * 2.0f,
+        bounds.w + padY * 2.0f
     };
 }
+
 
 
 void PauseMenu::NavigateLevels(int direction) {
@@ -257,14 +269,16 @@ void PauseMenu::RenderSelectionBox(float x, float y, float width, float height, 
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
-
 void PauseMenu::OnMouseMove(float mx, float my) {
+    hoveredIndex_ = -1;
+    hoveredLevelIndex_ = -1;
+
     if (currentMode_ == Mode::MAIN) {
         for (int i = 0; i < COUNT; ++i) {
             auto bounds = GetOptionBounds(i, screenWidth_, screenHeight_, 1.5f);
             if (mx >= bounds.x && mx <= bounds.x + bounds.width &&
                 my >= bounds.y && my <= bounds.y + bounds.height) {
-                SetSelectedIndex(i);
+                hoveredIndex_ = i;
                 break;
                 }
         }
@@ -273,27 +287,13 @@ void PauseMenu::OnMouseMove(float mx, float my) {
             auto bounds = GetLevelBounds(i, screenWidth_, screenHeight_, 1.5f);
             if (mx >= bounds.x && mx <= bounds.x + bounds.width &&
                 my >= bounds.y && my <= bounds.y + bounds.height) {
-                selectedLevelIndex_ = i;
+                hoveredLevelIndex_ = i;
                 break;
                 }
         }
     }
 }
 
-
-void PauseMenu::OnMouseClick(float mx, float my) {
-    for (int i = 0; i < COUNT; ++i) {
-        auto bounds = GetOptionBounds(i, screenWidth_, screenHeight_, 1.5f);
-        if (mx >= bounds.x && mx <= bounds.x + bounds.width &&
-            my >= bounds.y && my <= bounds.y + bounds.height) {
-            if (currentMode_ == Mode::MAIN && i == CHANGE_LEVEL) {
-                currentMode_ = Mode::LEVEL_SELECT;
-            } else {
-                // Pass callback externally
-            }
-            }
-    }
-}
 bool PauseMenu::HandleInput(GLFWwindow* window, float dt,
                             const std::function<void(Option)>& onMainSelect,
                             const std::function<void(int)>& onLevelSelect)
@@ -309,7 +309,14 @@ bool PauseMenu::HandleInput(GLFWwindow* window, float dt,
 
     if (IsInLevelSelectMode()) {
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !mousePressed) {
-            if (onLevelSelect) onLevelSelect(selectedLevelIndex_);
+            for (int i = 0; i < (int)levelNames_.size(); ++i) {
+                auto bounds = GetLevelBounds(i, screenWidth_, screenHeight_, scaleOption);
+                if (mx >= bounds.x && mx <= bounds.x + bounds.width &&
+                    my >= bounds.y && my <= bounds.y + bounds.height) {
+                    if (onLevelSelect) onLevelSelect(i);
+                    break;
+                }
+            }
             mousePressed = true;
         }
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
@@ -335,9 +342,18 @@ bool PauseMenu::HandleInput(GLFWwindow* window, float dt,
 
     // Main Menu mode
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !mousePressed) {
-        Select([&](Option opt) {
-            if (onMainSelect) onMainSelect(opt);
-        });
+        for (int i = 0; i < COUNT; ++i) {
+            auto bounds = GetOptionBounds(i, screenWidth_, screenHeight_, scaleOption);
+            if (mx >= bounds.x && mx <= bounds.x + bounds.width &&
+                my >= bounds.y && my <= bounds.y + bounds.height) {
+                if (i == CHANGE_LEVEL) {
+                    currentMode_ = Mode::LEVEL_SELECT;
+                } else if (onMainSelect) {
+                    onMainSelect(static_cast<Option>(i));
+                }
+                break;
+            }
+        }
         mousePressed = true;
     }
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
