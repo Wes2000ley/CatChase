@@ -69,7 +69,7 @@ void NuklearRenderer::UploadFont() {
     nk_font_atlas_init_default(&atlas_);
     nk_font_atlas_begin(&atlas_);
 
-    struct nk_font* font = nk_font_atlas_add_from_file(&atlas_, "resources/fonts/OCRAEXT.TTF", 18.0f, nullptr);
+    struct nk_font* font = nk_font_atlas_add_from_file(&atlas_, "resources/fonts/LittlePaws.TTF", 25.0f, nullptr);
     int w, h;
     const void* img = nk_font_atlas_bake(&atlas_, &w, &h, NK_FONT_ATLAS_RGBA32);
 
