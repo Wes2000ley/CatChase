@@ -38,6 +38,8 @@ void Game::Init() {
     srand(static_cast<unsigned>(time(nullptr)));
     ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
     ResourceManager::LoadShader("resources/shaders/box.vert", "resources/shaders/box.frag", nullptr, "box");
+
+
 	GUI = new NuklearRenderer(glfwGetCurrentContext()); // or pass `window` if you store it
 
 
@@ -69,16 +71,6 @@ void Game::ProcessInput(GLFWwindow* window, float dt)
     }
 
     if (isPaused) {
-        pauseMenu.HandleInput(window, dt,
-            [&](PauseMenu::Option opt) {
-                HandlePauseMenuSelection(opt, window);
-            },
-            [&](int level) {
-                levelManager_.LoadLevel(level, Width, Height);
-                isPaused = false;
-                pauseMenu.SetActive(false);
-            });
-
         return;
     }
 
@@ -94,10 +86,6 @@ void Game::Render()
 
 	const glm::mat4& projection = levelManager_.GetCurrentLevel()->GetProjection();
 	levelManager_.Render(projection);
-	if (pauseMenu.IsActive()) {
-		pauseMenu.Render(Width, Height);
-		return; // skip rendering game
-	}
 
 }
 
@@ -126,24 +114,94 @@ void Game::RenderUI() {
 	if (!GUI) return;
 
 	struct nk_context* ctx = GUI->GetContext();
-	if (pauseMenu.IsActive()) {
-		if (nk_begin(ctx, "Pause Menu", nk_rect(50, 50, 220, 200),
-					 NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_TITLE)) {
-			nk_layout_row_dynamic(ctx, 30, 1);
-			if (nk_button_label(ctx, "Resume")) {
-				isPaused = false;
-				pauseMenu.SetActive(false);
+	if (!pauseMenu.IsActive()) return;
+
+	// Get current window size (so Nuklear scales correctly)
+	glfwGetFramebufferSize(glfwGetCurrentContext(), (int*)&Width, (int*)&Height);
+
+	// Dynamic size: 30% width, 40% height
+	float menuWidth = Width * 0.3f;
+	float menuHeight = Height * 0.4f;
+
+	// Centered position
+	float menuX = (Width - menuWidth) / 2.0f;
+	float menuY = (Height - menuHeight) / 2.0f;
+
+	// Level selector content
+	static int selectedLevel = 0;
+	static const char* levels[] = { "Level 1", "Level 2", "Level 3" };
+	static int numLevels = sizeof(levels) / sizeof(levels[0]);
+
+
+
+nk_style backup = ctx->style;
+
+	// Apply styling (colors and padding)
+	nk_style *style = &ctx->style;
+
+	// Set window background and border
+	style->window.fixed_background = nk_style_item_color(nk_rgba(20, 20, 20, 220)); // dark semi-transparent
+	style->window.border_color = nk_rgb(80, 80, 80);
+	style->window.rounding = 10;
+	style->window.border = 2.0f;
+	style->window.padding = nk_vec2(15, 15);
+
+	// Set button appearance
+	style->button.normal = nk_style_item_color(nk_rgb(50, 50, 50));
+	style->button.hover = nk_style_item_color(nk_rgb(70, 70, 70));
+	style->button.active = nk_style_item_color(nk_rgb(90, 90, 90));
+	style->button.border_color = nk_rgb(120, 120, 120);
+	style->button.text_background = nk_rgb(0, 0, 0);
+	style->button.text_normal = nk_rgb(230, 230, 230);
+	style->button.text_hover = nk_rgb(255, 255, 255);
+	style->button.text_active = nk_rgb(255, 255, 200);
+
+	style->button.border = 1.0f;
+	style->button.rounding = 6;
+	style->button.padding = nk_vec2(8, 4);
+
+	// Label font color
+	style->text.color = nk_rgb(240, 240, 240);
+
+
+	if (nk_begin(ctx, "Pause Menu", nk_rect(menuX, menuY, menuWidth, menuHeight),
+	             NK_WINDOW_BORDER | NK_WINDOW_TITLE)) {
+		nk_layout_row_dynamic(ctx, 35, 1);
+		nk_label(ctx, "Game Paused", NK_TEXT_CENTERED);
+
+		nk_spacing(ctx, 1);
+
+		if (nk_button_label(ctx, "▶ Resume")) {
+			isPaused = false;
+			pauseMenu.SetActive(false);
+		}
+
+		nk_spacing(ctx, 1);
+
+		nk_label(ctx, "Change Level:", NK_TEXT_LEFT);
+		if (nk_combo_begin_label(ctx, levels[selectedLevel], nk_vec2(menuWidth - 40.0f, 150))) {
+			nk_layout_row_dynamic(ctx, 25, 1);
+			for (int i = 0; i < numLevels; ++i) {
+				if (nk_combo_item_label(ctx, levels[i], NK_TEXT_LEFT)) {
+					selectedLevel = i;
+					levelManager_.LoadLevel(i, Width, Height);
+					isPaused = false;
+					pauseMenu.SetActive(false);
+				}
 			}
-			if (nk_button_label(ctx, "Change Level")) {
-				// You can pop a submenu here
-			}
-			if (nk_button_label(ctx, "Quit")) {
-				glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
-			}
-					 }
-		nk_end(ctx);
+			nk_combo_end(ctx);
+		}
+
+		nk_spacing(ctx, 1);
+
+		if (nk_button_label(ctx, "⏻ Quit")) {
+			glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+		}
 	}
+	nk_end(ctx);
+	ctx->style = backup;
 }
-void Game::SetUIRenderer(NuklearRenderer* gui) {
+
+void Game::SetUIRenderer(NuklearRenderer *gui) {
 	GUI = gui;
 }
