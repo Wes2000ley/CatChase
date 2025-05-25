@@ -83,6 +83,10 @@ void TextRenderer::Load(std::string font, unsigned int fontSize)
         };
         Characters.insert(std::pair<char, Character>(c, character));
     }
+
+    this->FontSize = fontSize;
+    this->Ascent = face->size->metrics.ascender >> 6;
+    this->Descent = face->size->metrics.descender >> 6;
     glBindTexture(GL_TEXTURE_2D, 0);
     // destroy FreeType once we're finished
     FT_Done_Face(face);
@@ -142,4 +146,32 @@ float TextRenderer::MeasureTextWidth(const std::string& text, float scale) {
             width += (it->second.Advance >> 6) * scale;  // 1/64th pixel units → pixels
     }
     return width;
+}
+glm::vec4 TextRenderer::MeasureRenderedTextBounds(const std::string& text, float x, float y, float scale)
+{
+    float minX = x, maxX = x;
+    float minY = y, maxY = y;
+
+    for (char c : text)
+    {
+        auto it = Characters.find(c);
+        if (it == Characters.end()) continue;
+
+        const Character& ch = it->second;
+
+        float xpos = x + ch.Bearing.x * scale;
+        float ypos = y + (Characters['H'].Bearing.y - ch.Bearing.y) * scale;
+
+        float w = ch.Size.x * scale;
+        float h = ch.Size.y * scale;
+
+        minX = std::min(minX, xpos);
+        maxX = std::max(maxX, xpos + w);
+        minY = std::min(minY, ypos);
+        maxY = std::max(maxY, ypos + h);
+
+        x += (ch.Advance >> 6) * scale;
+    }
+
+    return glm::vec4(minX, minY, maxX - minX, maxY - minY);
 }

@@ -36,11 +36,14 @@ void Game::Init() {
 
     srand(static_cast<unsigned>(time(nullptr)));
     ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
+    ResourceManager::LoadShader("resources/shaders/box.vert", "resources/shaders/box.frag", nullptr, "box");
 
 
     // Global TextRenderer
     auto text = ResourceManager::LoadTextRenderer("default", Width, Height);
     text->Load("resources/fonts/OCRAEXT.TTF", 20); // or your font
+    auto textPause = ResourceManager::LoadTextRenderer("pause", Width, Height);
+    textPause->Load("resources/fonts/OCRAEXT.TTF", 25); // or your font
     // Load level 0
     levelManager_.LoadLevel(0, Width, Height);
     pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
@@ -53,8 +56,6 @@ void Game::Update(float dt)
 void Game::ProcessInput(GLFWwindow* window, float dt)
 {
     static bool pausePressed = false;
-    static bool mousePressed = false;  // 👈 Move this here
-    static bool enterPressed = false;  // 👈 Shared across modes
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !pausePressed) {
         isPaused = !isPaused;
@@ -66,100 +67,15 @@ void Game::ProcessInput(GLFWwindow* window, float dt)
     }
 
     if (isPaused) {
-        double mouseX, mouseY;
-        glfwGetCursorPos(window, &mouseX, &mouseY);
-
-        TextRenderer& text = ResourceManager::GetTextRenderer("default");
-        float scaleOption = 1.5f;
-
-        if (pauseMenu.IsInLevelSelectMode()) {
-            // Mouse hover
-            for (int i = 0; i < pauseMenu.GetLevelCount(); ++i) {
-                auto bounds = pauseMenu.GetLevelBounds(i, Width, Height, scaleOption);
-                if (mouseX >= bounds.x && mouseX <= bounds.x + bounds.width &&
-                    mouseY >= bounds.y && mouseY <= bounds.y + bounds.height) {
-                    pauseMenu.SetSelectedLevel(i);
-                    break;
-                }
-            }
-
-            // Mouse click on level
-            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !mousePressed) {
-                int levelToLoad = pauseMenu.GetSelectedLevel();
-                levelManager_.LoadLevel(levelToLoad, Width, Height);
-                pauseMenu.SetActive(false);
-                isPaused = false;
-                mousePressed = true;
-                return;
-            }
-            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-                mousePressed = false;
-            }
-
-            // Arrow keys
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-                pauseMenu.NavigateLevels(-1);
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-                pauseMenu.NavigateLevels(+1);
-
-            if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS && !enterPressed) {
-                int levelToLoad = pauseMenu.GetSelectedLevel();
-                levelManager_.LoadLevel(levelToLoad, Width, Height);
-                pauseMenu.SetActive(false);
-                isPaused = false;
-                enterPressed = true;
-            }
-            if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
-                enterPressed = false;
-
-            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-                pauseMenu.ExitLevelSelect();
-
-            return;
-        }
-
-        // --- MAIN pause menu ---
-        for (int i = 0; i < PauseMenu::COUNT; ++i) {
-            auto bounds = pauseMenu.GetOptionBounds(i, Width, Height, scaleOption);
-            if (mouseX >= bounds.x && mouseX <= bounds.x + bounds.width &&
-                mouseY >= bounds.y && mouseY <= bounds.y + bounds.height) {
-                pauseMenu.SetSelectedIndex(i);
-                break;
-            }
-        }
-
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !mousePressed) {
-            PauseMenu::Option selected;
-            bool selectionMade = false;
-
-            pauseMenu.Select([&](PauseMenu::Option opt) {
-                selected = opt;
-                selectionMade = true;
-            });
-
-            if (selectionMade && !pauseMenu.IsInLevelSelectMode()) {
-                HandlePauseMenuSelection(selected, window);
-            }
-
-            mousePressed = true;
-            return;
-        }
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-            mousePressed = false;
-
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-            pauseMenu.Navigate(-1);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-            pauseMenu.Navigate(+1);
-
-        if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS && !enterPressed) {
-            pauseMenu.Select([&](PauseMenu::Option opt) {
+        pauseMenu.HandleInput(window, dt,
+            [&](PauseMenu::Option opt) {
                 HandlePauseMenuSelection(opt, window);
+            },
+            [&](int level) {
+                levelManager_.LoadLevel(level, Width, Height);
+                isPaused = false;
+                pauseMenu.SetActive(false);
             });
-            enterPressed = true;
-        }
-        if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
-            enterPressed = false;
 
         return;
     }
@@ -177,7 +93,7 @@ void Game::Render()
 	const glm::mat4& projection = levelManager_.GetCurrentLevel()->GetProjection();
 	levelManager_.Render(projection);
 	if (pauseMenu.IsActive()) {
-		pauseMenu.Render();
+		pauseMenu.Render(Width, Height);
 		return; // skip rendering game
 	}
 

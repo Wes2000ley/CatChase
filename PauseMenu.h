@@ -3,6 +3,11 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/fwd.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 class PauseMenu {
 public:
@@ -24,7 +29,7 @@ public:
 	void SetSelectedIndex(int index);
 	int GetSelectedIndex() const { return selectedIndex_; }
 
-	void Render();
+	void Render(float screenWidth, float screenHeight); // replaces hardcoded size version
 	std::string GetOptionLabel(int index) const;
 	float GetOptionY(int index, float screenHeight) const;
 	MenuOptionBounds GetOptionBounds(int index, float screenWidth, float screenHeight, float scale) const;
@@ -39,6 +44,11 @@ public:
 
 	int GetLevelCount() const { return static_cast<int>(levelNames_.size()); }
 	void SetSelectedLevel(int index) { selectedLevelIndex_ = index; }
+	void OnMouseMove(float x, float y);
+	void OnMouseClick(float x, float y);
+	bool HandleInput(GLFWwindow* window, float dt,
+				 const std::function<void(Option)>& onMainSelect,
+				 const std::function<void(int)>& onLevelSelect);
 
 
 private:
@@ -46,12 +56,21 @@ private:
 	int selectedIndex_;
 	int selectedLevelIndex_ = 0;
 
-	unsigned int quadVAO_ = 0;
-	unsigned int quadVBO_ = 0;
-	void initRenderData(); // new
 
 	Mode currentMode_ = Mode::MAIN;
 	std::vector<std::string> options_;
 	std::vector<std::string> levelNames_;
+	void RenderOption(const ::std::string &text, float x, float y, float scale, const glm::vec3 & color, const glm::mat4 & proj, const std::
+	                  string &rendererName);
+	void RenderSelectionBox(float x, float y, float width, float height, const glm::vec4& color, const glm::mat4& proj);
+
+	void initRenderData(); // now initializes box quad too
+
+	GLuint quadVAO_ = 0, quadVBO_ = 0;
+	GLuint boxVAO_ = 0, boxVBO_ = 0;
+
+	float screenWidth_ = 1920.0f;
+	float screenHeight_ = 1080.0f;
+	std::vector<glm::vec2> levelOptionPositions_;
 
 };

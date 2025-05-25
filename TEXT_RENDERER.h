@@ -46,14 +46,22 @@ public:
 	// renders a string of text using the precompiled list of characters
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, const glm::mat4& projection);
 
-
+	glm::vec4 MeasureRenderedTextBounds(const std::string& text, float x, float y, float scale);
 	static TextRenderer& LoadTextRenderer(const std::string& name, unsigned int width, unsigned int height);
 	static TextRenderer& GetTextRenderer(const std::string& name);
 	float MeasureTextWidth(const std::string& text, float scale);
+	float GetLineHeight(float scale) const {
+		return (Ascent - Descent) * scale;
+	}
+
 
 private:
 	// render state
 	unsigned int VAO{}, VBO{};
+	unsigned int FontSize;
+	int Ascent;
+	int Descent;
+
 
 };
 float MeasureTextWidth(const std::string& text, float scale);
