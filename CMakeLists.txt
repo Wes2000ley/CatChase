@@ -40,6 +40,7 @@ add_executable(Game
         NuklearRenderer.h
         NineSliceRenderer.cpp
         NineSliceRenderer.h
+        utility.h
 
 )
 

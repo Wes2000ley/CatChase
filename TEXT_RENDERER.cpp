@@ -147,31 +147,51 @@ float TextRenderer::MeasureTextWidth(const std::string& text, float scale) {
     }
     return width;
 }
-glm::vec4 TextRenderer::MeasureRenderedTextBounds(const std::string& text, float x, float y, float scale)
+glm::vec4 TextRenderer::MeasureRenderedTextBounds(const std::string& text, float x, float y, float scale) const // Add const
 {
-    float minX = x, maxX = x;
-    float minY = y, maxY = y;
+    // ... existing implementation ...
+    float minX = x, maxX = x; // Initialize minX/maxX with the initial x
+    float minY = y, maxY = y; // Initialize minY/maxY with the initial y
+    // (or use FLT_MAX/FLT_MIN if text could be empty and render nothing)
+    bool firstChar = true;
 
-    for (char c : text)
+
+    // Store the initial pen position before iterating
+    float currentPenX = x;
+
+    for (char c_char : text) // Use char c_char to avoid conflict with RenderText's c iterator
     {
-        auto it = Characters.find(c);
+        auto it = Characters.find(c_char);
         if (it == Characters.end()) continue;
 
         const Character& ch = it->second;
 
-        float xpos = x + ch.Bearing.x * scale;
-        float ypos = y + (Characters['H'].Bearing.y - ch.Bearing.y) * scale;
+        // xpos and ypos are the top-left of the glyph's bitmap
+        float xpos = currentPenX + ch.Bearing.x * scale;
+        float ypos = y + (Characters.at('H').Bearing.y - ch.Bearing.y) * scale; // Assuming 'H' exists and y is "top of H" line
 
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
 
-        minX = std::min(minX, xpos);
-        maxX = std::max(maxX, xpos + w);
-        minY = std::min(minY, ypos);
-        maxY = std::max(maxY, ypos + h);
-
-        x += (ch.Advance >> 6) * scale;
+        if (firstChar) {
+            minX = xpos;
+            maxX = xpos + w;
+            minY = ypos;
+            maxY = ypos + h;
+            firstChar = false;
+        } else {
+            minX = std::min(minX, xpos);
+            maxX = std::max(maxX, xpos + w);
+            minY = std::min(minY, ypos); // Smallest y-coordinate (topmost)
+            maxY = std::max(maxY, ypos + h); // Largest y-coordinate + h (bottommost)
+        }
+        // Advance pen position for the next character
+        currentPenX += (ch.Advance >> 6) * scale;
     }
 
-    return glm::vec4(minX, minY, maxX - minX, maxY - minY);
+    if (firstChar) { // Text was empty or all chars not found
+        return glm::vec4(x, y, 0.0f, 0.0f);
+    }
+
+    return glm::vec4(minX, minY, maxX - minX, maxY - minY); // (actual_left, actual_top, actual_width, actual_height)
 }
