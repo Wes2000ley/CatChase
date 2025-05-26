@@ -6,7 +6,7 @@
 #define UTILITY_H
 #include <nuklear.h>
 
-#include "TEXT_RENDERER.h"
+#include "../../TEXT_RENDERER.h"
 
 static glm::vec2 CalculateCenteredTextPosition(
     TextRenderer& renderer,

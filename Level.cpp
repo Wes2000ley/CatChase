@@ -84,12 +84,25 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
     // ✅ Layered tilemaps
     tileLayers.clear();
-    for (const auto& layer : data["tileLayers"]) {
-        auto tilemap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
-        tilemap->SetTextRenderer(sharedText);
-        tilemap->Load(layer["tilemap"]);
-        tileLayers.push_back(std::move(tilemap));
-    }
+	for (auto it = data["tileLayers"].rbegin(); it != data["tileLayers"].rend(); ++it) {
+		const auto& layer = *it;
+
+		auto tilemap = std::make_unique<TileMap>(shader, tileTex, mapWidth, mapHeight, tileWidth, tileHeight);
+		tilemap->SetTextRenderer(sharedText);
+
+		if (layer.contains("tilemap") && layer["tilemap"].is_array()) {
+			tilemap->Load(layer["tilemap"]);
+		} else {
+			std::cerr << "Layer missing or invalid tilemap\n";
+			continue;
+		}
+
+		bool isCollidable = layer.value("collidable", false);
+		tilemap->SetCollidable(isCollidable);
+		std::cout << "Loaded layer with collidable = " << isCollidable << "\n";
+
+		tileLayers.push_back(std::move(tilemap));
+	}
 
     // ✅ Solid tiles
     for (int tileID : data["solid"]) {
@@ -140,8 +153,20 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 
 void Level::Update(float dt) {
 	std::vector<const std::vector<std::vector<int>>*> mapDataPtrs;
-	for (const auto& layer : tileLayers)
-		mapDataPtrs.push_back(&layer->GetMapData());
+	for (const auto& layer : tileLayers) {
+		if (layer->IsCollidable()) {
+			const auto& data = layer->GetMapData();
+			if (!data.empty() && !data[0].empty()) {
+				mapDataPtrs.push_back(&data);
+			}
+		}
+	}
+
+	if (mapDataPtrs.empty()) {
+		std::cerr << "❌ No valid collidable map data! Skipping update to avoid crash.\n";
+		return;
+	}
+
 
 	int tileWidth = tileLayers[0]->GetTileWidth();
 	int tileHeight = tileLayers[0]->GetTileHeight();

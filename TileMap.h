@@ -27,6 +27,9 @@ public:
 
 	void SetTextRenderer(std::shared_ptr<TextRenderer> text);
 
+	void SetCollidable(bool c);
+	bool IsCollidable() const;
+
 private:
 	std::shared_ptr<Shader> shader_;
 	std::shared_ptr<Texture2D> tileset_;
@@ -35,6 +38,8 @@ private:
 	std::vector<std::vector<int>> mapData_;
 	int tilesPerRow_, tilesPerCol_;
 	std::shared_ptr<TextRenderer> textRenderer_;
+	bool collidable = false;
+
 
 
 	static unsigned int quadVAO_;

@@ -182,3 +182,10 @@ void TileMap::Destroy() {
         gridVAO_ = 0;
     }
 }
+void TileMap::SetCollidable(bool c) {
+    collidable = c;
+}
+
+bool TileMap::IsCollidable() const {
+    return collidable;
+}

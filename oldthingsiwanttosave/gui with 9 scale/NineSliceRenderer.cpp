@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // NineSliceRenderer.cpp – final, HasUniform-free variant
 // ──────────────────────────────────────────────────────────────────────────────
-#include "NineSliceRenderer.h"
+#include "../../NineSliceRenderer.h"
 
 #include <array>
 #include <algorithm>
@@ -17,6 +17,7 @@ NineSliceRenderer::~NineSliceRenderer() {
     if (VAO) glDeleteVertexArrays(1, &VAO);
     if (VBO) glDeleteBuffers(1, &VBO);
 }
+
 
 // ── public API ────────────────────────────────────────────────────────────────
 void NineSliceRenderer::SetTexture(std::shared_ptr<Texture2D> texture,

@@ -21,7 +21,7 @@
 #include "NuklearRenderer.h" // Forward-declared or included
 #include <nuklear.h>
 
-#include "NineSliceRenderer.h"
+#include "oldthingsiwanttosave/gui with 9 scale/NineSliceRenderer.h"
 
 // Represents the current state of the game
 enum GameState {

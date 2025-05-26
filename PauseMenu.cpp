@@ -236,8 +236,6 @@ void PauseMenu::initRenderData() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
-
-
 PauseMenu::~PauseMenu() {
     if (quadVAO_) glDeleteVertexArrays(1, &quadVAO_);
     if (quadVBO_) glDeleteBuffers(1, &quadVBO_);

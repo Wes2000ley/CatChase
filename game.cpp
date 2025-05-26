@@ -80,6 +80,7 @@ void Game::ProcessInput(GLFWwindow* window, float dt)
 void Game::Render()
 {
 
+
 	const glm::mat4& projection = levelManager_.GetCurrentLevel()->GetProjection();
 	levelManager_.Render(projection);
 

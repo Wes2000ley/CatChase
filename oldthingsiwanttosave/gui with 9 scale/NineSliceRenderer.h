@@ -4,8 +4,8 @@
 // ──────────────────────────────────────────────────────────────────────────────
 #include <memory>
 #include <glm/glm.hpp>
-#include "shader.h"
-#include "texture.h"
+#include "../../SHADER.h"
+#include "../../TEXTURE.h"
 #include <glad/glad.h>
 
 class NineSliceRenderer {

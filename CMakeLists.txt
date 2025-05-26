@@ -38,9 +38,6 @@ add_executable(Game
         DebugDraw.cpp DebugDraw.h
         NuklearRenderer.cpp
         NuklearRenderer.h
-        NineSliceRenderer.cpp
-        NineSliceRenderer.h
-        utility.h
 
 )
 
