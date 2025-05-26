@@ -54,6 +54,13 @@ public:
 	void RenderUI();  // new
 	void SetUIRenderer(NuklearRenderer* gui);
 	NuklearRenderer* GUI = nullptr;
+	NineSliceRenderer* panelRenderer = nullptr;
+	NineSliceRenderer* continueRenderer = nullptr;
+	NineSliceRenderer* continuehotRenderer = nullptr;
+	NineSliceRenderer* levelSelectRenderer = nullptr;
+	NineSliceRenderer* levelSelectHotRenderer = nullptr;
+	NineSliceRenderer* quitRenderer = nullptr;
+	NineSliceRenderer* quitHotRenderer = nullptr;
 
 
 private:

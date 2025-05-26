@@ -1,12 +1,8 @@
-// ──────────────────────────────────────────────────────────────────────────────
-// Game.cpp – polished pause-menu UI + movement / Esc handling
-// ──────────────────────────────────────────────────────────────────────────────
 #include "game.h"
 
-#include <cstdlib>
-#include <ctime>
 #include <unordered_set>
-#include "TEXT_RENDERER.h"
+#include <cstdlib> // for rand()
+#include <ctime>   // for seeding rand (e.g., in main())
 
 #include "Dog.h"
 #include "Enemies.h"
@@ -15,256 +11,193 @@
 #include "TileMap.h"
 #include "Collision.h"
 #include "LevelManager.h"
-#include "NineSliceRenderer.h"
 #include "TEXT_RENDERER.h"
+
+
 #include "PauseMenu.h"
-#include "utility.h"
-
-#include <GLFW/glfw3.h>
-#include "nuklear.h"
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-
-
-using std::string;
-using std::vector;
-
 PauseMenu pauseMenu;
-bool       isPaused = false;
+bool isPaused = false;
 
-// ──────────────────────────────────────────────────────────────────────────────
-Game::Game(unsigned int w, unsigned int h)
-    : State(GAME_ACTIVE), Width(w), Height(h)
+
+
+
+Game::Game(unsigned int width, unsigned int height)
+    : State(GAME_ACTIVE), Keys(), Width(width), Height(height)
 {
-    std::fill(std::begin(Keys), std::end(Keys), false);
 }
-Game::~Game() { ResourceManager::Clear(); }
 
-// ──────────────────────────────────────────────────────────────────────────────
+Game::~Game()
+{
+    ResourceManager::UnloadShader("pause");
+    // OR
+    ResourceManager::Clear(); // unloads ALL shaders/textures
+}
+
 void Game::Init() {
 
     srand(static_cast<unsigned>(time(nullptr)));
-
-    ResourceManager::LoadShader("resources/shaders/pause.vert",
-                                "resources/shaders/pause.frag", nullptr, "pause");
-
-    auto nine = ResourceManager::LoadShader("resources/shaders/9slice.vert",
-                                            "resources/shaders/9slice.frag", nullptr, "9slice");
+    ResourceManager::LoadShader("resources/shaders/pause.vert", "resources/shaders/pause.frag", nullptr, "pause");
+    ResourceManager::LoadShader("resources/shaders/box.vert", "resources/shaders/box.frag", nullptr, "box");
 
 
-    auto panelTex = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/pausePanel.png", "pausepanel");
-    auto continueText = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/Continue.png", "Continue");
-    auto continueHotText = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/Continue-h.png", "ContinueH");
-    auto levelSelectTex = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/LevelSelect.png", "Select");
-    auto levelSelectHotTex = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/LevelSelect-h.png", "SelectH");
-    auto quitTex = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/quitegame.png", "Quite");
-    auto quitHotTex = ResourceManager::LoadTexture(
-        "resources/gui/Game Menu/quitgame-h.png", "QuiteH");
-
-    panelRenderer = new NineSliceRenderer(nine);
-    continueRenderer = new NineSliceRenderer(nine);
-    continuehotRenderer = new NineSliceRenderer(nine);
-    levelSelectRenderer = new NineSliceRenderer(nine);
-    levelSelectHotRenderer = new NineSliceRenderer(nine);
-    quitRenderer = new NineSliceRenderer(nine);
-    quitHotRenderer = new NineSliceRenderer(nine);
+	GUI = new NuklearRenderer(glfwGetCurrentContext()); // or pass `window` if you store it
 
 
-    panelRenderer->SetTexture(panelTex, 16);
-    continueRenderer->SetTexture(continueText, 16);
-    continuehotRenderer->SetTexture(continueHotText, 16);
-    levelSelectRenderer->SetTexture(levelSelectTex, 16);
-    levelSelectHotRenderer->SetTexture(levelSelectHotTex, 16);
-    quitRenderer->SetTexture(quitTex, 16);
-    quitHotRenderer->SetTexture(quitHotTex, 16);
-
-
-    ResourceManager::LoadTextRenderer("default", Width, Height)
-            ->Load("resources/fonts/OCRAEXT.TTF", 20);
-    ResourceManager::LoadTextRenderer("pause", Width, Height)
-        ->Load("resources/fonts/OCRAEXT.TTF", 28);
-
+    // Global TextRenderer
+    auto text = ResourceManager::LoadTextRenderer("default", Width, Height);
+    text->Load("resources/fonts/OCRAEXT.TTF", 20); // or your font
+    auto textPause = ResourceManager::LoadTextRenderer("pause", Width, Height);
+    textPause->Load("resources/fonts/OCRAEXT.TTF", 25); // or your font
+    // Load level 0
     levelManager_.LoadLevel(0, Width, Height);
     pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
-
-    GUI = new NuklearRenderer(glfwGetCurrentContext());
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-void Game::Update(float dt) {
-    if (!isPaused) levelManager_.Update(dt);
+void Game::Update(float dt)
+{	 if (!isPaused) levelManager_.Update(dt);
 }
 
-/* ---------------------------------------------------------------------------
- *  ProcessInput – updates Keys[ ] every frame, toggles pause on Esc,
- *                 and forwards controls to Level when not paused.
- * ------------------------------------------------------------------------- */
-void Game::ProcessInput(GLFWwindow* window, float dt) {
+void Game::ProcessInput(GLFWwindow* window, float dt)
+{
+    static bool pausePressed = false;
 
-    /* --- toggle pause with Esc ------------------------------------------------ */
-    static bool escHeld = false;
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !escHeld) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !pausePressed) {
         isPaused = !isPaused;
-        escHeld  = true;
+        pauseMenu.SetActive(isPaused);
+        pausePressed = true;
     }
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) escHeld = false;
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
+        pausePressed = false;
+    }
 
-    /* --- fill key array (0-1023) --------------------------------------------- */
-    for (int i = 0; i < 1024; ++i)
-        Keys[i] = glfwGetKey(window, i) == GLFW_PRESS;
+    if (isPaused) {
+        return;
+    }
 
-    /* --- send WASD etc. to current level when not paused --------------------- */
-    if (!isPaused)
-        levelManager_.ProcessInput(dt, Keys);
+    levelManager_.ProcessInput(dt, Keys);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-void Game::Render() {
-    levelManager_.Render(levelManager_.GetCurrentLevel()->GetProjection());
+void Game::Render()
+{
+
+	const glm::mat4& projection = levelManager_.GetCurrentLevel()->GetProjection();
+	levelManager_.Render(projection);
+
 }
-void Game::SetSize(unsigned w, unsigned h) { Width = w; Height = h; }
-void Game::SetUIRenderer(NuklearRenderer* g) { GUI = g; }
-void Game::HandlePauseMenuSelection(PauseMenu::Option, GLFWwindow*) {}
 
+void Game::SetSize(unsigned int width, unsigned int height)
+{
+	this->Width = width;
+	this->Height = height;
+}
 
+void Game::HandlePauseMenuSelection(PauseMenu::Option opt, GLFWwindow* window) {
+	switch (opt) {
+		case PauseMenu::RESUME:
+			isPaused = false;
+			pauseMenu.SetActive(false);
+			break;
+		case PauseMenu::CHANGE_LEVEL:
+			isPaused = true;
+
+			break;
+		case PauseMenu::QUIT:
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+			break;
+	}
+}
 void Game::RenderUI() {
-    if (!isPaused) return;
+	if (!GUI) return;
 
-    // 0) Setup pixel space projection
-    int fbW, fbH;
-    glfwGetFramebufferSize(glfwGetCurrentContext(), &fbW, &fbH);
-    glm::mat4 uiProj = glm::ortho(0.f, (float)fbW, (float)fbH, 0.f, -1.f, 1.f);
+	struct nk_context* ctx = GUI->GetContext();
+	if (!pauseMenu.IsActive()) return;
 
-    // 1) Fullscreen fade
-    {
-        auto sh = ResourceManager::GetShader("pause");
-        sh->Use();
-        sh->SetMatrix4("projection", uiProj, false);
-        sh->SetVector4f("uColor", {0, 0, 0, 0.55f}, false);
-        float quad[6][2] = {
-            {0,0}, { (float)fbW,(float)fbH }, { 0,(float)fbH },
-            {0,0}, { (float)fbW,0 },           { (float)fbW,(float)fbH }
-        };
-        GLuint vao, vbo;
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof quad, quad, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDeleteBuffers(1, &vbo);
-        glDeleteVertexArrays(1, &vao);
-    }
+	// Get current window size (so Nuklear scales correctly)
+	glfwGetFramebufferSize(glfwGetCurrentContext(), (int*)&Width, (int*)&Height);
 
-    // 2) Menu panel rectangle (percent of screen)
-constexpr float MENU_X_PCT = 0.35f;
-    constexpr float MENU_Y_PCT = 0.25f;
-    constexpr float MENU_W_PCT = 0.30f;
-    constexpr float MENU_H_PCT = 0.50f;
-    constexpr float SMALL_FONT_PX = 20.f;
+	// Dynamic size: 30% width, 40% height
+	float menuWidth = Width * 0.3f;
+	float menuHeight = Height * 0.4f;
+
+	// Centered position
+	float menuX = (Width - menuWidth) / 2.0f;
+	float menuY = (Height - menuHeight) / 2.0f;
+
+	// Level selector content
+	static int selectedLevel = 0;
+	static const char* levels[] = { "Level 1", "Level 2", "Level 3" };
+	static int numLevels = sizeof(levels) / sizeof(levels[0]);
 
 
-    float menuX = MENU_X_PCT * fbW;
-    float menuY = MENU_Y_PCT * fbH;
-    float menuW = MENU_W_PCT * fbW;
-    float menuH = MENU_H_PCT * fbH;
 
-    // 3) Element rectangles **inside** the menu, also pct of menu
-    //    Tweak these to reposition/resize each element:
-    struct ElemDef {
-        float xPct, yPct, wPct, hPct;
-        NineSliceRenderer* normal, *hover;
-    };
-const ElemDef elems[] = {
-        // continue button
-        {0.20f, 0.22f, 0.60f, 0.133f, continueRenderer, continuehotRenderer},
-        // level-select button
-        {0.20f, 0.44f, 0.60f, 0.133f, levelSelectRenderer, levelSelectHotRenderer},
-        // quit button
-        {0.20f, 0.66f, 0.60f, 0.133f, quitRenderer, quitHotRenderer}
-    };
-    // 4) Draw panel
-    NineSliceRenderer::SetDepthTest(false);
-    panelRenderer->Render(menuX, menuY, menuW, menuH, uiProj);
+nk_style backup = ctx->style;
 
-    // 5) Cursor for hover
-    double cx, cy;
-    glfwGetCursorPos(glfwGetCurrentContext(), &cx, &cy);
+	// Apply styling (colors and padding)
+	nk_style *style = &ctx->style;
 
-    // 6) Iterate elements
-    for (int i = 0; i < 3; ++i) {
-        auto &d = elems[i];
-        // pixel rect:
-        float ex = menuX + d.xPct * menuW;
-        float ey = menuY + d.yPct * menuH;
-        float ew = d.wPct * menuW;
-        float eh = d.hPct * menuH;
+	// Set window background and border
+	style->window.fixed_background = nk_style_item_color(nk_rgba(20, 20, 20, 220)); // dark semi-transparent
+	style->window.border_color = nk_rgb(80, 80, 80);
+	style->window.rounding = 10;
+	style->window.border = 2.0f;
+	style->window.padding = nk_vec2(15, 15);
 
-        bool hover = (cx >= ex && cx <= ex + ew && cy >= ey && cy <= ey + eh);
-        (hover ? d.hover : d.normal)
-            ->Render(ex, ey, ew, eh, uiProj);
-    }
+	// Set button appearance
+	style->button.normal = nk_style_item_color(nk_rgb(50, 50, 50));
+	style->button.hover = nk_style_item_color(nk_rgb(70, 70, 70));
+	style->button.active = nk_style_item_color(nk_rgb(90, 90, 90));
+	style->button.border_color = nk_rgb(120, 120, 120);
+	style->button.text_background = nk_rgb(0, 0, 0);
+	style->button.text_normal = nk_rgb(230, 230, 230);
+	style->button.text_hover = nk_rgb(255, 255, 255);
+	style->button.text_active = nk_rgb(255, 255, 200);
 
-    NineSliceRenderer::SetDepthTest(true);
+	style->button.border = 1.0f;
+	style->button.rounding = 6;
+	style->button.padding = nk_vec2(8, 4);
 
-    // 7) Draw text centered in each
-    auto &big = ResourceManager::GetTextRenderer("pause");
-    auto &small = ResourceManager::GetTextRenderer("default");
-    float txtScale = 1.0f;  // or compute font-scale as you like
+	// Label font color
+	style->text.color = nk_rgb(240, 240, 240);
 
-    // “PAUSED” title at top of panel
-    {
-        float tw = big.MeasureTextWidth("PAUSED", txtScale);
-        float tx = menuX + 0.5f * (menuW - tw);
-        float ty = menuY + 0.05f * menuH;           // 5% down from panel top
-        big.RenderText("PAUSED", tx, ty, txtScale, {1,1,1}, uiProj);
-    }
 
-    // button labels:
-    constexpr const char* btnLabels[] = { "CONTINUE", "LEVEL SELECT", "QUIT" };
-    for (int i = 0; i < 3; ++i) {
-        auto &d = elems[i];
-        float ex = menuX + d.xPct * menuW;
-        float ey = menuY + d.yPct * menuH;
-        float ew = d.wPct * menuW;
-        float eh = d.hPct * menuH;
+	if (nk_begin(ctx, "Pause Menu", nk_rect(menuX, menuY, menuWidth, menuHeight),
+	             NK_WINDOW_BORDER | NK_WINDOW_TITLE)) {
+		nk_layout_row_dynamic(ctx, 35, 1);
+		nk_label(ctx, "Game Paused", NK_TEXT_CENTERED);
 
-        // measure text width
-        const char* txt = btnLabels[i];
-        float tw = small.MeasureTextWidth(txt, txtScale);
-        // compute height of text in pixels
-        float th = SMALL_FONT_PX * txtScale;
+		nk_spacing(ctx, 1);
 
-        // center x, y
-        float tx = ex + 0.5f * (ew - tw);
-        float ty = ey + 0.5f * (eh - th);
-        small.RenderText(btnLabels[i], tx, ty, txtScale, {1,1,1}, uiProj);
-    }
+		if (nk_button_label(ctx, "▶ Resume")) {
+			isPaused = false;
+			pauseMenu.SetActive(false);
+		}
 
-    // 8) Simple input
-    static bool prevL = false;
-    bool l = glfwGetMouseButton(glfwGetCurrentContext(),
-                                GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    if (l && !prevL) {
-        if      (cx >= menuX + elems[0].xPct*menuW && cx <= menuX + (elems[0].xPct+elems[0].wPct)*menuW
-              && cy >= menuY + elems[0].yPct*menuH && cy <= menuY + (elems[0].yPct+elems[0].hPct)*menuH)
-            isPaused = false;
-        else if (cx >= menuX + elems[2].xPct*menuW && cx <= menuX + (elems[2].xPct+elems[2].wPct)*menuW
-              && cy >= menuY + elems[2].yPct*menuH && cy <= menuY + (elems[2].yPct+elems[2].hPct)*menuH)
-            glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
-        else if (cx >= menuX + elems[1].xPct*menuW && cx <= menuX + (elems[1].xPct+elems[1].wPct)*menuW
-              && cy >= menuY + elems[1].yPct*menuH && cy <= menuY + (elems[1].yPct+elems[1].hPct)*menuH)
-            /* your level-cycle logic here */;
-    }
-    prevL = l;
+		nk_spacing(ctx, 1);
+
+		nk_label(ctx, "Change Level:", NK_TEXT_LEFT);
+		if (nk_combo_begin_label(ctx, levels[selectedLevel], nk_vec2(menuWidth - 40.0f, 150))) {
+			nk_layout_row_dynamic(ctx, 25, 1);
+			for (int i = 0; i < numLevels; ++i) {
+				if (nk_combo_item_label(ctx, levels[i], NK_TEXT_LEFT)) {
+					selectedLevel = i;
+					levelManager_.LoadLevel(i, Width, Height);
+					isPaused = false;
+					pauseMenu.SetActive(false);
+				}
+			}
+			nk_combo_end(ctx);
+		}
+
+		nk_spacing(ctx, 1);
+
+		if (nk_button_label(ctx, "⏻ Quit")) {
+			glfwSetWindowShouldClose(glfwGetCurrentContext(), true);
+		}
+	}
+	nk_end(ctx);
+	ctx->style = backup;
+}
+
+void Game::SetUIRenderer(NuklearRenderer *gui) {
+	GUI = gui;
 }
