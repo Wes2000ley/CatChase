@@ -1,6 +1,8 @@
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
+#include <unordered_set>
+
 #include "shader.h"
 #include "texture.h"
 #include <vector>
@@ -21,8 +23,10 @@ public:
 	int GetTileWidth() const { return tileWidth_; }
 	int GetTileHeight() const { return tileHeight_; }
 	const std::vector<std::vector<int>>& GetMapData() const { return mapData_; }
-	void DrawDebugGrid(const glm::mat4& projection, std::shared_ptr<Shader> debugShader);
-
+	void DrawDebugGrid(const glm::mat4& projection,
+					   std::shared_ptr<Shader> debugShader,
+					   const std::unordered_set<int>& solidTiles,
+					   const std::vector<std::unique_ptr<TileMap>>& allLayers);
 	void Destroy();
 
 	void SetTextRenderer(std::shared_ptr<TextRenderer> text);

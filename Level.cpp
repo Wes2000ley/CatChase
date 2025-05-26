@@ -240,7 +240,7 @@ void Level::Render(const glm::mat4& proj) {
 				}
 			}
 
-	bestLayer->DrawDebugGrid(proj, debugShader_);
+			bestLayer->DrawDebugGrid(proj, debugShader_, solidTiles, tileLayers);
 		}
 	}
 }

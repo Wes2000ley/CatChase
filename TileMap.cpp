@@ -4,7 +4,8 @@
 #include <utility>
 
 
-
+#include "Collision.h"
+#include "Collision.h"
 #include "Dog.h"
 #include "RESOURCE_MANAGER.h"
 
@@ -138,7 +139,10 @@ void TileMap::initGridLines() {
     glBindVertexArray(0);
 }
 
-void TileMap::DrawDebugGrid(const glm::mat4& projection, std::shared_ptr<Shader> debugShader)
+void TileMap::DrawDebugGrid(const glm::mat4& projection,
+                             std::shared_ptr<Shader> debugShader,
+                             const std::unordered_set<int>& solidTiles,
+                             const std::vector<std::unique_ptr<TileMap>>& allLayers)
 {
     initGridLines();
 
@@ -146,27 +150,47 @@ void TileMap::DrawDebugGrid(const glm::mat4& projection, std::shared_ptr<Shader>
         debugShader->Use();
         debugShader->SetMatrix4("projection", projection);
         debugShader->SetMatrix4("model", glm::mat4(1.0f));
-        debugShader->SetVector3f("lineColor", glm::vec3(0.0f)); // black or your preferred color
+        debugShader->SetVector3f("lineColor", glm::vec3(0.0f));
     }
 
     glBindVertexArray(gridVAO_);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(gridLines_.size() / 2));
     glBindVertexArray(0);
 
-    // Text overlay
     if (!textRenderer_) return;
-    const int cols = static_cast<int>(mapData_[0].size());
-    const int rows = static_cast<int>(mapData_.size());
+
+    int rows = static_cast<int>(mapData_.size());
+    int cols = static_cast<int>(mapData_[0].size());
 
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
+
+            bool isSolidInAnyLayer = false;
+
+            for (const auto& layer : allLayers) {
+                if (!layer->IsCollidable()) continue;
+
+                const auto& map = layer->GetMapData();
+                if (y < map.size() && x < map[y].size()) {
+                    int tileID = map[y][x];
+                    if (tileID >= 0 && solidTiles.find(tileID) != solidTiles.end()) {
+                        isSolidInAnyLayer = true;
+                        break;
+                    }
+                }
+            }
+
+            glm::vec3 color = isSolidInAnyLayer ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(1.0f);
+
             std::string label = std::to_string(x) + "," + std::to_string(y);
             float xpos = x * tileWidth_ + 2.0f;
             float ypos = y * tileHeight_ + 12.0f;
-            textRenderer_->RenderText(label, xpos, ypos, 0.25f, glm::vec3(1.0f), projection);
+
+            textRenderer_->RenderText(label, xpos, ypos, 0.25f, color, projection);
         }
     }
 }
+
 
 void TileMap::SetTextRenderer(std::shared_ptr<TextRenderer> text) {
     textRenderer_ = std::move(text);
