@@ -122,6 +122,7 @@ def write_tilemap_json(data, path):
                 comma = "," if i < len(data["tileLayers"]) - 1 else ""
                 out.write("    {\n")
                 out.write(f'      "name": "{layer["name"]}",\n')
+                out.write(f'      "collidable": true,\n')
                 out.write('      "tilemap": ')
                 write_array(out, layer["tilemap"], indent="      ")
                 out.write(f"\n    }}{comma}\n")
