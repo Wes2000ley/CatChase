@@ -163,20 +163,6 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
 			transitions_.push_back(lt);
 		}
 	}
-	// *** DEBUG PRINT ***
-	std::cout << "[Level::Load] Loaded " << transitions_.size()
-			  << " transitions for level " << index << ":\n";
-	for (size_t i = 0; i < transitions_.size(); ++i) {
-		const auto& lt = transitions_[i];
-		std::cout << "    [" << i << "] pos=(" << lt.pos.x << "," << lt.pos.y
-				  << "), size=(" << lt.size.x << "," << lt.size.y
-				  << "), targetLevel=" << lt.targetLevel;
-		if (lt.spawn.has_value()) {
-			std::cout << ", spawn=(" << lt.spawn->x << "," << lt.spawn->y << ")";
-		}
-		std::cout << "\n";
-	}
-
 
 }
 
@@ -272,9 +258,33 @@ int Level::Update(float dt) {
             }
         }
     }
+	// ─── Bite‐attack collision check ───
+	if (dog_->IsBitingActive()) {
+		// Compute the small bite circle in front of the dog
+		Circle biteCircle = dog_->ComputeBiteCircle();
 
-    // 7) No transition triggered: return -1
-    return -1;
+		// Loop over enemies, check for intersection with the bite circle
+		// We’ll remove any enemy that is intersecting.
+		bool anyEnemyRemoved = false;
+		for (auto it = enemies.begin(); it != enemies.end(); /*no increment here*/) {
+			Circle enemyCircle = (*it)->ComputeBoundingCircle();
+			if (CircleIntersect(biteCircle, enemyCircle)) {
+				std::cout << "[Level] Enemy hit by bite!\n";
+				// If your Enemy has a TakeDamage() or OnHit() method, call it here.
+				// For now we just remove the enemy from the vector:
+
+				it = enemies.erase(it);
+				anyEnemyRemoved = true;
+			}
+			else {
+				++it;
+			}
+		}
+		// you can optionally do something if anyEnemyRemoved == true
+	}
+
+	// 7) No transition triggered: return -1
+	return -1;
 }
 
 
@@ -325,6 +335,19 @@ void Level::ProcessInput(float dt, const bool* keys) {
 	if (keys[GLFW_KEY_S]) velocity.y += 1.0f;
 	if (keys[GLFW_KEY_A]) velocity.x -= 1.0f;
 	if (keys[GLFW_KEY_D]) velocity.x += 1.0f;
+
+	// Trigger bite on SPACE (only when not paused, etc.)
+	static bool spacePressed = false;
+	if (keys[GLFW_KEY_SPACE]) {
+		if (!spacePressed) {
+			spacePressed = true;
+			if (dog_) {
+				dog_->StartBite();
+			}
+		}
+	} else {
+		spacePressed = false;
+	}
 
 static bool tabPressed = false;
 	if (keys[GLFW_KEY_TAB]) {

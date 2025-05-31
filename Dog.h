@@ -49,6 +49,15 @@ public:
 	void SetVelocity(glm::vec2 v);
 	void SetCollisionScale(float scale);
 
+	// Call this to initiate a bite (if not already on cooldown)
+	void StartBite();
+
+	// Returns true if the dog is in mid‐bite (during the bite animation window)
+	bool IsBitingActive() const { return isBiting_; }
+
+	// Computes a small “bite circle” in front of the dog’s facing direction
+	Circle ComputeBiteCircle() const;
+
 
 private:
 	std::shared_ptr<Shader> shader_;
@@ -69,6 +78,14 @@ private:
 	static unsigned int quadVAO_;
 	static unsigned int quadVBO_;
 	void initRenderData();
+
+	bool isBiting_       = false;   // true while the bite “animation” is active
+	float biteTimer_     = 0.0f;    // how much longer we remain in the “bite” state
+	float biteCooldown_  = 0.0f;    // how much longer until we can bite again
+
+	static constexpr float biteDuration_     = 0.1f;  // bite lasts 0.3 seconds
+	static constexpr float biteCooldownTime_ = 0.5f;  // after bite ends, wait 0.5s before next
+
 };
 
 

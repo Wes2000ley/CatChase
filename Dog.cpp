@@ -79,6 +79,26 @@ void Dog::Update(
     int tileHeight,
     glm::vec2 screenSize)
 {
+    // ─── Begin: handle bite & cooldown timers ───
+    // 1) If we're on cooldown (i.e. just finished a bite), reduce that timer:
+    if (biteCooldown_ > 0.0f) {
+        biteCooldown_ -= dt;
+        if (biteCooldown_ < 0.0f)
+            biteCooldown_ = 0.0f;
+    }
+
+    // 2) If currently biting, decrement the biteTimer_:
+    if (isBiting_) {
+        biteTimer_ -= dt;
+        if (biteTimer_ <= 0.0f) {
+            // Bite just finished → enter cooldown
+            isBiting_ = false;
+            biteCooldown_ = biteCooldownTime_;
+            std::cout << "[Dog] Bite finished; entering cooldown.\n";
+        }
+    }
+    // ─── End: bite & cooldown timers ───
+
     float frameW = (256.0f / 16.0f) * manscale_;
     float frameH = (48.0f / 3.0f) * manscale_;
     float radius = 0.5f * glm::length(glm::vec2(frameW, frameH)) * collisionScale_;
@@ -151,4 +171,55 @@ void Dog::initRenderData()
 }
 void Dog::SetCollisionScale(float scale) {
     collisionScale_ = scale;
+}
+void Dog::StartBite() {
+    // Only allow a bite if we are not already biting and the cooldown has expired
+    if (!isBiting_ && biteCooldown_ <= 0.0f) {
+        isBiting_   = true;
+        biteTimer_  = biteDuration_;
+        // (You could also switch to a “bite” animation frame here by modifying frame_.x/frame_.y)
+        std::cout << "[Dog] Starting bite!\n";
+    }
+}
+
+Circle Dog::ComputeBiteCircle() const {
+    // We want a small circle in front of the dog’s facing direction:
+    // Pick a “bite range” of, say, 0.5 × the dog’s bounding circle radius,
+    // and place it one radius‐and‐a‐bit in front of the dog’s center.
+    Circle body = ComputeBoundingCircle();
+    float biteRangeFactor = 0.5f;      // bite circle radius = 0.5 × body radius
+    float offsetFactor    = 0.75f;     // how far in front of the body center we place it
+
+    float biteRadius = body.radius * biteRangeFactor;
+    float dx = 0.0f, dy = 0.0f;
+
+switch (facingDirection_) {
+        case Direction8::Right: dx = 1.0f;
+            dy = 0.0f;
+            break;
+        case Direction8::DownRight: dx = 0.7071f;
+            dy = -0.7071f;
+            break;
+        case Direction8::Down: dx = 0.0f;
+            dy = -1.0f;
+            break;
+        case Direction8::DownLeft: dx = -0.7071f;
+            dy = -0.7071f;
+            break;
+        case Direction8::Left: dx = -1.0f;
+            dy = 0.0f;
+            break;
+        case Direction8::UpLeft: dx = -0.7071f;
+            dy = 0.7071f;
+            break;
+        case Direction8::Up: dx = 0.0f;
+            dy = 1.0f;
+            break;
+        case Direction8::UpRight: dx = 0.7071f;
+            dy = 0.7071f;
+            break;
+    }
+
+    glm::vec2 biteCenter = body.center + glm::vec2(dx, dy) * (body.radius * offsetFactor);
+    return { biteCenter, biteRadius };
 }
