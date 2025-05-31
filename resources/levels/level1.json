@@ -29,8 +29,30 @@
   "player": {
     "x": 336,
     "y": 148,
-    "scale": 0.6
+    "scale": 0.6,
+    "collisionScale": 0.7
   },
+  "transitions": [
+    {
+      "x": 3,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "targetLevel": 2,
+      "spawnX": 5,
+      "spawnY": 8
+
+    },
+    {
+      "x": 23,
+      "y": 18,
+      "width": 1,
+      "height": 1,
+      "targetLevel": 2,
+      "spawnX": 336,
+      "spawnY": 144
+    }
+  ],
   "internalWidth": 528,
   "internalHeight": 304,
   "tileLayers": [

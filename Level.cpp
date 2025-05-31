@@ -39,6 +39,9 @@ void Level::Unload() {
 void Level::Load(int index, unsigned int width, unsigned int height) {
     Unload();
 
+	currentLevel_ = index;
+	transitionCooldown_ = 0.0f;
+
     std::string path = "resources/levels/level" + std::to_string(index) + ".json";
     std::ifstream file(path);
     if (!file) {
@@ -146,64 +149,134 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
             std::cerr << "❌ Unknown enemy type: " << type << "\n";
         }
     }
-}
 
-
-
-
-void Level::Update(float dt) {
-	std::vector<const std::vector<std::vector<int>>*> mapDataPtrs;
-	for (const auto& layer : tileLayers) {
-		if (layer->IsCollidable()) {
-			const auto& data = layer->GetMapData();
-			if (!data.empty() && !data[0].empty()) {
-				mapDataPtrs.push_back(&data);
+	transitions_.clear();
+	if (data.contains("transitions")) {
+		for (const auto& t : data["transitions"]) {
+			LevelTransition lt{};
+			lt.pos       = glm::ivec2(t["x"], t["y"]);
+			lt.size      = glm::ivec2(t.value("width", 1), t.value("height", 1));
+			lt.targetLevel = t["targetLevel"];
+			if (t.contains("spawnX") && t.contains("spawnY")) {
+				lt.spawn = glm::vec2(t["spawnX"], t["spawnY"]);
 			}
+			transitions_.push_back(lt);
 		}
 	}
-
-	if (mapDataPtrs.empty()) {
-		std::cerr << "❌ No valid collidable map data! Skipping update to avoid crash.\n";
-		return;
-	}
-
-
-	int tileWidth = tileLayers[0]->GetTileWidth();
-	int tileHeight = tileLayers[0]->GetTileHeight();
-	glm::vec2 screenSize = { internalWidth, internalHeight };
-
-	// 🌀 Get player's current circle
-	Circle playerCircle = dog_->ComputeBoundingCircle();
-
-	// 👾 Update enemies
-	for (auto& enemy : enemies) {
-		enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, playerCircle);
-	}
-
-	// 🐕 Update player
-	dog_->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, screenSize);
-	playerCircle = dog_->ComputeBoundingCircle();
-
-	// 💥 Resolve player <-> enemy overlap
-	for (auto& enemy : enemies) {
-		Circle enemyCircle = enemy->ComputeBoundingCircle();
-		if (!CircleIntersect(playerCircle, enemyCircle)) continue;
-		std::cout << "💥 Player collided with enemy!\n";
-
-
-		glm::vec2 pushDir = glm::normalize(playerCircle.center - enemyCircle.center);
-		glm::vec2 newCenter = playerCircle.center + pushDir * 2.0f;
-
-		Circle pushed = playerCircle;
-		pushed.center = newCenter;
-
-		if (!IsCircleBlocked(pushed, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
-			dog_->SetPosition(pushed.center - glm::vec2((256.0f / 16.0f) * 0.5f, (48.0f / 3.0f) * 0.5f) * dog_->GetScale());
-		} else {
-			dog_->SetVelocity(glm::vec2(0.0f));
+	// *** DEBUG PRINT ***
+	std::cout << "[Level::Load] Loaded " << transitions_.size()
+			  << " transitions for level " << index << ":\n";
+	for (size_t i = 0; i < transitions_.size(); ++i) {
+		const auto& lt = transitions_[i];
+		std::cout << "    [" << i << "] pos=(" << lt.pos.x << "," << lt.pos.y
+				  << "), size=(" << lt.size.x << "," << lt.size.y
+				  << "), targetLevel=" << lt.targetLevel;
+		if (lt.spawn.has_value()) {
+			std::cout << ", spawn=(" << lt.spawn->x << "," << lt.spawn->y << ")";
 		}
+		std::cout << "\n";
 	}
+
+
 }
+
+
+
+
+int Level::Update(float dt) {
+    // 1) Build a list of pointers to each collidable layer’s map data
+    std::vector<const std::vector<std::vector<int>>*> mapDataPtrs;
+    for (const auto& layer : tileLayers) {
+        if (layer->IsCollidable()) {
+            const auto& data = layer->GetMapData();
+            if (!data.empty() && !data[0].empty()) {
+                mapDataPtrs.push_back(&data);
+            }
+        }
+    }
+
+    // If there's no valid collidable map data, skip everything and return “no transition”
+    if (mapDataPtrs.empty()) {
+        std::cerr << "❌ No valid collidable map data! Skipping update to avoid crash.\n";
+        return -1; // <— MUST return -1 here (meaning “no level change”)
+    }
+
+    // 2) Gather tile sizes and screen size
+    int tileWidth  = tileLayers[0]->GetTileWidth();
+    int tileHeight = tileLayers[0]->GetTileHeight();
+    glm::vec2 screenSize = { internalWidth, internalHeight };
+
+    // 3) Update enemies
+    Circle playerCircle = dog_->ComputeBoundingCircle();
+    for (auto& enemy : enemies) {
+        enemy->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, playerCircle);
+    }
+
+    // 4) Update the player (dog)
+    dog_->Update(dt, mapDataPtrs, solidTiles, tileWidth, tileHeight, screenSize);
+    playerCircle = dog_->ComputeBoundingCircle();
+
+    // 5) Resolve any player‐enemy overlap
+    for (auto& enemy : enemies) {
+        Circle enemyCircle = enemy->ComputeBoundingCircle();
+        if (!CircleIntersect(playerCircle, enemyCircle)) continue;
+
+        std::cout << "💥 Player collided with enemy!\n";
+        glm::vec2 pushDir = glm::normalize(playerCircle.center - enemyCircle.center);
+        glm::vec2 newCenter = playerCircle.center + pushDir * 2.0f;
+        Circle pushed = playerCircle;
+        pushed.center = newCenter;
+
+        if (!IsCircleBlocked(pushed, mapDataPtrs, tileWidth, tileHeight, solidTiles)) {
+            // Compute how far to move the dog’s sprite (half‐width/height of the sprite)
+            float halfW = ((256.0f / 16.0f) * 0.5f) * dog_->GetScale();
+            float halfH = ((48.0f / 3.0f) * 0.5f) * dog_->GetScale();
+            dog_->SetPosition(pushed.center - glm::vec2(halfW, halfH));
+        } else {
+            dog_->SetVelocity({0.0f, 0.0f});
+        }
+    }
+
+    // 6) Check for level transition (tile‐space)
+    glm::vec2 playerCenter = dog_->ComputeBoundingCircle().center;
+    int tileX = static_cast<int>(playerCenter.x) / tileWidth;
+    int tileY = static_cast<int>(playerCenter.y) / tileHeight;
+
+    if (transitionCooldown_ > 0.0f) {
+        transitionCooldown_ -= dt;
+    } else {
+        for (const auto& t : transitions_) {
+            bool insideX = (tileX >= t.pos.x && tileX <  t.pos.x + t.size.x);
+            bool insideY = (tileY >= t.pos.y && tileY <  t.pos.y + t.size.y);
+
+            if (insideX && insideY && t.targetLevel != currentLevel_) {
+                std::cout << "[Level::Update] 🔁 Transition to level "
+                          << t.targetLevel << "\n";
+                lastLevel_ = currentLevel_;
+
+                // If there is a spawn override, convert it from tile→pixel now
+                glm::vec2 spawnOverride = dog_->GetPosition();
+                bool hasSpawn = false;
+                if (t.spawn.has_value()) {
+                    spawnOverride = glm::vec2(
+                        t.spawn->x * tileWidth,
+                        t.spawn->y * tileHeight
+                    );
+                    hasSpawn = true;
+                }
+
+                transitionCooldown_ = 1.0f; // one‐second cooldown to avoid immediate retrigger
+
+                // Return the index of the next level; LevelManager will actually load it
+                return t.targetLevel;
+            }
+        }
+    }
+
+    // 7) No transition triggered: return -1
+    return -1;
+}
+
 
 
 

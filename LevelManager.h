@@ -17,4 +17,6 @@ void LoadLevel(int index, unsigned int width, unsigned int height);
 private:
 	std::unique_ptr<Level> level;
 	int currentLevelIndex = -1;
+	unsigned int lastWindowWidth  = 0;
+	unsigned int lastWindowHeight = 0;
 };

@@ -16,7 +16,7 @@ public:
 void Load(int index, unsigned int width, unsigned int height);
                 // Load tilemap, enemies, etc.
 	void Unload();                          // Free level-specific memory
-	void Update(float dt);                 // Update all enemies
+	int Update(float dt);                 // Update all enemies
 	void Render(const glm::mat4& proj);    // Draw tilemap + enemies
 	void ProcessInput(float dt, const bool* keys);
 	const glm::mat4& GetProjection() const { return projection_; }
@@ -35,6 +35,18 @@ void Load(int index, unsigned int width, unsigned int height);
 	std::vector<std::unique_ptr<TileMap>> tileLayers;
 	std::shared_ptr<Shader> debugShader_;
 	bool debugMode_ = false;
+	struct LevelTransition {
+		glm::ivec2 pos;
+		glm::ivec2 size;
+		int targetLevel;
+		std::optional<glm::vec2> spawn; // optional spawn override
+	};
+
+	int lastLevel_ = -1;
+	int currentLevel_ = -1;
+	float transitionCooldown_ = 0.0f;
+
+	std::vector<LevelTransition> transitions_;
 
 
 

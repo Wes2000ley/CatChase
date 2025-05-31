@@ -32,6 +32,27 @@
     "scale": 0.6,
     "collisionScale": 0.7
   },
+  "transitions": [
+  {
+    "x": 3,
+    "y": 0,
+    "width": 1,
+    "height": 1,
+    "targetLevel": 2,
+    "spawnX": 5,
+    "spawnY": 8
+
+  },
+  {
+    "x": 3,
+    "y": 16,
+    "width": 1,
+    "height": 1,
+    "targetLevel": 1,
+    "spawnX": 336,
+    "spawnY": 144
+  }
+  ],
   "internalWidth": 496,
   "internalHeight": 272,
   "tileLayers": [
