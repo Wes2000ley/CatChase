@@ -1,47 +1,64 @@
 cmake_minimum_required(VERSION 3.31)
-project(Game)
+project(Game LANGUAGES CXX)
 
+# ───────────────────────────────
+# ✅ C++ Standard and Options
+# ───────────────────────────────
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# External dependencies
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+# ───────────────────────────────
+# ✅ Compiler Warnings and Optimization
+# ───────────────────────────────
+if(MSVC)
+    add_compile_options(/W4 /permissive- /EHsc)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi /RTC1 /MDd")
+    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "/DEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /GL /DNDEBUG /MD")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/LTCG /INCREMENTAL:NO /OPT:REF /OPT:ICF")
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wconversion)
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -fno-omit-frame-pointer -DNDEBUG")
+endif()
+
+# ───────────────────────────────
+# ✅ Static linking (MinGW only)
+# ───────────────────────────────
+if(WIN32 AND NOT MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+endif()
+
+# ───────────────────────────────
+# ✅ Dependencies
+# ───────────────────────────────
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glad REQUIRED)
 find_package(cglm REQUIRED)
 find_package(glm REQUIRED)
-find_package(freetype REQUIRED)
+find_package(Freetype REQUIRED)
 find_package(nlohmann_json REQUIRED)
-find_package(nuklear)
+find_package(nuklear REQUIRED)
 
-# Optional: Static linking settings (Windows-specific)
-if (Win32)
-    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
-endif ()
-
-# ✅ Game Executable
-add_executable(Game
-        main.cpp
-        game.cpp game.h
-        SHADER.cpp SHADER.h
-        TEXTURE.cpp TEXTURE.h
-        RESOURCE_MANAGER.cpp RESOURCE_MANAGER.h
-        Dog.cpp Dog.h
-        Enemy.cpp Enemy.h
-        Enemies.h
-        TileMap.cpp TileMap.h
-        Collision.h
-        TEXT_RENDERER.cpp TEXT_RENDERER.h
-        Level.cpp Level.h
-        LevelManager.cpp LevelManager.h
-        PauseMenu.cpp PauseMenu.h
-        EnemyRegistry.cpp EnemyRegistry.h
-        DebugDraw.cpp DebugDraw.h
-        NuklearRenderer.cpp
-        NuklearRenderer.h
-
+# ───────────────────────────────
+# ✅ Sources
+# ───────────────────────────────
+file(GLOB_RECURSE GAME_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_SOURCE_DIR}/src/*.c"
+        "${CMAKE_SOURCE_DIR}/src/*.h"
+        "${CMAKE_SOURCE_DIR}/src/*.hpp"
 )
 
-# ✅ Link libraries
+add_executable(Game ${GAME_SOURCES})
+target_include_directories(Game PRIVATE "${CMAKE_SOURCE_DIR}/src")
+
 target_link_libraries(Game
         OpenGL::GL
         glfw
@@ -53,21 +70,26 @@ target_link_libraries(Game
         nuklear::nuklear
 )
 
-# ✅ Copy resources folder to build dir
+# ───────────────────────────────
+# ✅ Copy resources
+# ───────────────────────────────
 add_custom_target(copy_resources ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/resources
-        ${CMAKE_CURRENT_BINARY_DIR}/resources
-        COMMENT "📁 Copying resources folder..."
+        "${CMAKE_SOURCE_DIR}/resources"
+        "$<TARGET_FILE_DIR:Game>/resources"
+        COMMENT "📁 Copying resources..."
 )
-
 add_dependencies(Game copy_resources)
 
-# 🗜️ Compress game executable and resources into a zip
+# ───────────────────────────────
+# ✅ Post-build ZIP packaging without tar
+# ───────────────────────────────
+# On Windows, simply copy to a "Package" folder instead of zipping.
 add_custom_command(
         TARGET Game POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "📦 Compressing GamePackage.zip..."
-        COMMAND ${CMAKE_COMMAND} -E tar cfv CatChase.zip --format=zip Game.exe resources
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "📦 Creating GamePackage.zip"
+        COMMAND ${CMAKE_COMMAND} -E echo "📦 Creating package folder..."
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Game>/Package"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:Game>" "$<TARGET_FILE_DIR:Game>/Package/"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "$<TARGET_FILE_DIR:Game>/resources" "$<TARGET_FILE_DIR:Game>/Package/resources"
+        COMMENT "📦 Packaging Game build (no tar needed)"
 )

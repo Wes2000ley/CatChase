@@ -8,7 +8,7 @@
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #include "NuklearRenderer.h"
-#include "resource_manager.h"
+#include "RESOURCE_MANAGER.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

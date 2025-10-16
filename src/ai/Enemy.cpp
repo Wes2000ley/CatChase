@@ -3,9 +3,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <utility>
-#include "Collision.h"
+#include "../ai-player/Collision.h"
 
-#include "TileMap.h"
+#include "../game/TileMap.h"
 
 unsigned int Enemy::quadVAO_ = 0;
 unsigned int Enemy::quadVBO_ = 0;
@@ -29,16 +29,24 @@ Enemy::Enemy(std::shared_ptr<Shader> shader,
 
 void Enemy::Draw(const glm::mat4& projection)
 {
+    // Calculate frame dimensions
     float frameWidth  = sheetWidth_  / static_cast<float>(frameCols_);
     float frameHeight = sheetHeight_ / static_cast<float>(frameRows_);
 
-    glm::vec2 uvSize   = glm::vec2(frameWidth / sheetWidth_, frameHeight / sheetHeight_);
-    glm::vec2 uvOffset = glm::vec2(
+    // UV rectangle for this frame
+    glm::vec2 uvSize   = { frameWidth / sheetWidth_, frameHeight / sheetHeight_ };
+    glm::vec2 uvOffset = {
         frame_.x * uvSize.x,
         1.0f - (frame_.y + 1) * uvSize.y
-    );
+    };
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position_, 0.0f));
+    // --- Properly center the sprite on its position ---
+    // Current 'position_' is top-left corner; convert to center-based rendering
+    glm::vec2 centerOffset(frameWidth * 0.5f, frameHeight * 0.5f);
+
+    glm::mat4 model(1.0f);
+    model = glm::translate(model, glm::vec3(position_ + centerOffset, 0.0f));
+    model = glm::translate(model, glm::vec3(-centerOffset, 0.0f)); // keep origin top-left for UVs
     model = glm::scale(model, glm::vec3(frameWidth * manscale_, frameHeight * manscale_, 1.0f));
 
     shader_->Use();
@@ -64,9 +72,16 @@ Circle c = {
         0.5f * glm::length(glm::vec2(frameWidth, frameHeight)) * collisionScale_
     };
 
-    if (!TryMoveCircle(c, velocity_, dt, {0, 0}, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
-        velocity_ = glm::vec2(0.0f);
+    // Compute map bounds from first collidable layer
+    glm::vec2 bounds(0.0f);
+    if (!mapDataPtrs.empty() && mapDataPtrs[0] && !mapDataPtrs[0]->empty()) {
+        int rows = static_cast<int>(mapDataPtrs[0]->size());
+        int cols = static_cast<int>((*mapDataPtrs[0])[0].size());
+        bounds = { cols * tileWidth, rows * tileHeight };
     }
+    if (!TryMoveCircle(c, velocity_, dt, bounds, mapDataPtrs, solidTiles, tileWidth, tileHeight)) {
+         velocity_ = glm::vec2(0.0f);
+     }
 
     // Back from center to top-left
     position_ = c.center - glm::vec2(frameWidth, frameHeight) * 0.5f;
@@ -118,6 +133,16 @@ Circle Enemy::ComputeBoundingCircle() const {
     float radius = 0.5f * glm::length(glm::vec2(width, height))* collisionScale_;
     glm::vec2 center = position_ + glm::vec2(width, height) * 0.5f;
     return { center, radius };
+}
+
+glm::vec2 Enemy::GetHalfSize() const {
+    float width  = (sheetWidth_ / frameCols_) * manscale_;
+    float height = (sheetHeight_ / frameRows_) * manscale_;
+    return { width * 0.5f, height * 0.5f };
+}
+
+void Enemy::SetCenter(const glm::vec2& center) {
+    position_ = center - GetHalfSize();
 }
 
 Enemy::~Enemy() = default;

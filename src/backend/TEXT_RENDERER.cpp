@@ -7,8 +7,8 @@
 
 #include FT_FREETYPE_H
 
-#include "text_renderer.h"
-#include "resource_manager.h"
+#include "TEXT_RENDERER.h"
+#include "RESOURCE_MANAGER.h"
 
 
 TextRenderer::TextRenderer(unsigned int width, unsigned int height)

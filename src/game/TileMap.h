@@ -3,11 +3,11 @@
 
 #include <unordered_set>
 
-#include "shader.h"
-#include "texture.h"
+#include "../backend/SHADER.h"
+#include "../backend/TEXTURE.h"
 #include <vector>
 #include <glm/glm.hpp>
-#include "text_renderer.h"
+#include "../backend/TEXT_RENDERER.h"
 
 class TileMap {
 public:

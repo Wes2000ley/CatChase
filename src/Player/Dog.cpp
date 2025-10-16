@@ -4,7 +4,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <array>
-#include "Collision.h"
+#include "../ai-player/Collision.h"
 
 unsigned int Dog::quadVAO_ = 0;
 unsigned int Dog::quadVBO_ = 0;

@@ -4,10 +4,10 @@
 #include <utility>
 
 
-#include "Collision.h"
-#include "Collision.h"
-#include "Dog.h"
-#include "RESOURCE_MANAGER.h"
+#include "../ai-player/Collision.h"
+#include "../ai-player/Collision.h"
+#include "../Player/Dog.h"
+#include "../backend/RESOURCE_MANAGER.h"
 
 unsigned int TileMap::quadVAO_ = 0;
 

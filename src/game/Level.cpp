@@ -3,12 +3,12 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Dog.h"
-#include "RESOURCE_MANAGER.h"
-#include "Enemies.h"
+#include "../Player/Dog.h"
+#include "../backend/RESOURCE_MANAGER.h"
+#include "../ai/Enemies.h"
 #include <fstream>
 #include <iostream>
-#include "DebugDraw.h"
+#include "../ui/DebugDraw.h"
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -139,13 +139,27 @@ void Level::Load(int index, unsigned int width, unsigned int height) {
         float scale = e.value("scale", 1.0f);
     	float collscale = e.value("collisionScale", 1.0f);
 
-        auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
-        if (enemy) {
-            enemy->SetScale(scale);
-        	enemy->SetCollisionScale(collscale);
+    	auto enemy = EnemyRegistry::Create(type, shader, texture, pos, frame, fw, fh, cols, rows);
+    	if (enemy) {
+    		enemy->SetScale(scale);
+    		enemy->SetCollisionScale(collscale);
 
-            enemies.push_back(std::move(enemy));
-        } else {
+    		// Optional per-enemy AI tuning
+    		if (e.contains("ai") && e["ai"].is_object()) {
+    			const auto& ai = e["ai"];
+    			auto apply = [&](auto* who){
+    				if (ai.contains("speed"))           who->ai_.SetSpeed( ai["speed"].get<float>() );
+    				if (ai.contains("vision"))          who->ai_.SetVision( ai["vision"].get<float>() );
+    				if (ai.contains("fov"))             who->ai_.SetFovDegrees( ai["fov"].get<float>() );
+    				if (ai.contains("loseTime"))        who->ai_.SetLoseTime( ai["loseTime"].get<float>() );
+    				if (ai.contains("repathInterval"))  who->ai_.SetRepathInterval( ai["repathInterval"].get<float>() );
+    			};
+    			if (auto s = dynamic_cast<SlimeEnemy*>(enemy.get()))     apply(s);
+    			if (auto s = dynamic_cast<SkeletonEnemy*>(enemy.get()))  apply(s);
+    		}
+
+    		enemies.push_back(std::move(enemy));
+    	} else {
             std::cerr << "❌ Unknown enemy type: " << type << "\n";
         }
     }

@@ -3,12 +3,12 @@
 
 #include <unordered_set>
 
-#include "shader.h"
-#include "texture.h"
+#include "../backend/SHADER.h"
+#include "../backend/TEXTURE.h"
 #include <glm/glm.hpp>
 
-#include "Collision.h"
-#include "TileMap.h"
+#include "../ai-player/Collision.h"
+#include "../game/TileMap.h"
 
 class Enemy {
 public:
@@ -32,7 +32,9 @@ public:
 	glm::vec2 GetPosition() const { return position_; }
 	Circle ComputeBoundingCircle() const ;
 	void SetCollisionScale(float scale) { collisionScale_ = scale; }
-
+	// Helpers for correct center/top-left conversion based on actual sprite size
+	void SetCenter(const glm::vec2& center);
+	glm::vec2 GetHalfSize() const;
 
 private:
 	std::shared_ptr<Shader> shader_;

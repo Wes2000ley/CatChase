@@ -4,9 +4,9 @@
 #include <vector>
 #include <unordered_set>
 
-#include "Dog.h"
+#include "../Player/Dog.h"
 #include "TileMap.h"
-#include "Enemy.h"
+#include "../ai/Enemy.h"
 
 class Level {
 public:

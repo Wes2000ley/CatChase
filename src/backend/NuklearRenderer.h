@@ -14,8 +14,8 @@
 #include <nuklear.h>
 
 
-#include "shader.h"
-#include "texture.h"
+#include "SHADER.h"
+#include "TEXTURE.h"
 
 class NuklearRenderer {
 public:

@@ -3,8 +3,8 @@
 
 #include <glm/glm.hpp>
 #include <memory>
-#include "SHADER.h"
-#include "Collision.h"
+#include "../backend/SHADER.h"
+#include "../ai-player/Collision.h"
 
 void InitDebugDraw();                     // Call once at init
 void DestroyDebugDraw();                  // Cleanup on shutdown

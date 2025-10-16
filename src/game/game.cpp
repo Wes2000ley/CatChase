@@ -4,17 +4,17 @@
 #include <cstdlib> // for rand()
 #include <ctime>   // for seeding rand (e.g., in main())
 
-#include "Dog.h"
-#include "Enemies.h"
-#include "Enemy.h"
-#include "RESOURCE_MANAGER.h"
+#include "../Player/Dog.h"
+#include "../ai/Enemies.h"
+#include "../ai/Enemy.h"
+#include "../backend/RESOURCE_MANAGER.h"
 #include "TileMap.h"
-#include "Collision.h"
+#include "../ai-player/Collision.h"
 #include "LevelManager.h"
-#include "TEXT_RENDERER.h"
+#include "../backend/TEXT_RENDERER.h"
 
 
-#include "PauseMenu.h"
+#include "../backend/PauseMenu.h"
 PauseMenu pauseMenu;
 bool isPaused = false;
 
@@ -51,6 +51,11 @@ void Game::Init() {
     // Load level 0
     levelManager_.LoadLevel(0, Width, Height);
     pauseMenu.SetLevels({ "Level 1", "Level 2", "Level 3" });
+
+	// Initialize FPS tracking
+	lastFPSUpdate_ = glfwGetTime();
+	avgFPS_ = 0.0f;
+	frameCount_ = 0;
 }
 
 void Game::Update(float dt)
@@ -79,12 +84,40 @@ void Game::ProcessInput(GLFWwindow* window, float dt)
 
 void Game::Render()
 {
-
-
 	const glm::mat4& projection = levelManager_.GetCurrentLevel()->GetProjection();
 	levelManager_.Render(projection);
 
+	// ---------------- FPS COUNTER ----------------
+	// ---------------- FPS COUNTER ----------------
+	static auto text = ResourceManager::GetTextRendererPtr("default");
+	if (text) {
+		frameCount_++;
+		double currentTime = glfwGetTime();
+		double delta = currentTime - lastFPSUpdate_;
+		if (delta >= 0.25) { // update every 1/4 sec
+			currentFPS_ = frameCount_ / delta;
+			avgFPS_ = 0.9 * avgFPS_ + 0.1 * currentFPS_;
+			frameCount_ = 0;
+			lastFPSUpdate_ = currentTime;
+		}
+
+		std::string fpsText = "FPS: " + std::to_string((int)std::round(avgFPS_));
+
+		// 🟢 Use screen-space projection
+		glm::mat4 screenProj = glm::ortho(0.0f, (float)Width, (float)Height, 0.0f);
+
+		text->RenderText(
+			fpsText,
+			Width - 150.0f,
+			Height - 40.0f,
+			1.2f,
+			glm::vec3(1.0f, 1.0f, 1.0f),
+			screenProj
+		);
+	}
+
 }
+
 
 void Game::SetSize(unsigned int width, unsigned int height)
 {

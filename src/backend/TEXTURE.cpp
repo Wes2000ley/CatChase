@@ -7,9 +7,11 @@
 ** option) any later version.
 ******************************************************************/
 #include <iostream>
-#include <GL/gl.h>
+//#include <GL/gl.h>
 
-#include "texture.h"
+#include "TEXTURE.h"
+#include <glad/glad.h>    // ✅ Required for GL_* constants and gl* functions
+#include <GLFW/glfw3.h>   // Optional but common when using OpenGL with GLFW
 
 
 Texture2D::Texture2D()

@@ -2,8 +2,8 @@
 #include <GLFW/glfw3.h>
 
 #include "game.h"
-#include "resource_manager.h"
-#include "NuklearRenderer.h"
+#include "../backend/RESOURCE_MANAGER.h"
+#include "../backend/NuklearRenderer.h"
 
 #include <iostream>
 

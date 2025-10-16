@@ -5,10 +5,10 @@
 #include <glad/glad.h>
 
 
-#include "Collision.h"
-#include "Collision.h"
-#include "Collision.h"
-#include "Collision.h"
+#include "../ai-player/Collision.h"
+#include "../ai-player/Collision.h"
+#include "../ai-player/Collision.h"
+#include "../ai-player/Collision.h"
 #include "RESOURCE_MANAGER.h"
 #include "TEXT_RENDERER.h"
 

@@ -114,7 +114,14 @@
       "scale": 0.75,
       "collisionScale": 0.4,
       "texture": "slime",
-      "shader": "sprite"
+      "shader": "sprite",
+      "ai": {
+        "speed": 20,
+        "vision": 380,
+        "fov": 360,
+        "loseTime": 1.2,
+        "repathInterval": 0.5
+      }
     },
     {
       "type": "skeleton",
@@ -129,7 +136,14 @@
       "scale": 0.75,
       "collisionScale": 0.4,
       "texture": "skeleton",
-      "shader": "sprite"
+      "shader": "sprite",
+      "ai": {
+        "speed": 20,
+        "vision": 380,
+        "fov": 360,
+        "loseTime": 1.2,
+        "repathInterval": 0.5
+      }
     }
   ]
 }

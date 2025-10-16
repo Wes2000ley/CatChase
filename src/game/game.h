@@ -12,16 +12,16 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "Dog.h"
-#include "Enemy.h"
+#include "../Player/Dog.h"
+#include "../ai/Enemy.h"
 #include "TileMap.h"
 #include "LevelManager.h"
-#include "PauseMenu.h"
+#include "../backend/PauseMenu.h"
 
-#include "NuklearRenderer.h" // Forward-declared or included
+#include "../backend/NuklearRenderer.h"
 #include <nuklear.h>
 
-#include "oldthingsiwanttosave/gui with 9 scale/NineSliceRenderer.h"
+#include "../../oldthingsiwanttosave/gui with 9 scale/NineSliceRenderer.h"
 
 // Represents the current state of the game
 enum GameState {
@@ -62,6 +62,12 @@ private:
 	Enemy* slime1_;
 	Enemy* skeleton1_;
 	LevelManager levelManager_;
+
+    // FPS Counter
+    double lastFPSUpdate_ = 0.0;
+    double avgFPS_ = 0.0;
+    double currentFPS_ = 0.0;
+    int frameCount_ = 0;
 };
 
 #endif

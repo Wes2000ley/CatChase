@@ -3,13 +3,13 @@
 
 #include <unordered_set>
 #include <glm/glm.hpp>
-#include "shader.h"
-#include "texture.h"
-#include "TileMap.h"
+#include "../backend/SHADER.h"
+#include "../backend/TEXTURE.h"
+#include "../game/TileMap.h"
 
 #include <memory>
 
-#include "Collision.h"
+#include "../ai-player/Collision.h"
 
 enum class Direction8 {
 	Right = 0,

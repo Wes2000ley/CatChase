@@ -80,7 +80,14 @@
       "frameCount": 6,
       "animSpeed": 3,
       "texture": "slime",
-      "shader": "sprite"
+      "shader": "sprite",
+      "ai": {
+        "speed": 20,
+        "vision": 380,
+        "fov": 360,
+        "loseTime": 1.2,
+        "repathInterval": 0.5
+      }
     },
     {
       "type": "skeleton",
@@ -94,7 +101,14 @@
       "animSpeed": 10,
       "scale": 0.75,
       "texture": "skeleton",
-      "shader": "sprite"
+      "shader": "sprite",
+      "ai": {
+        "speed": 20,
+        "vision": 380,
+        "fov": 360,
+        "loseTime": 1.2,
+        "repathInterval": 0.5
+      }
     },
     {
       "type": "skeleton",
@@ -108,7 +122,14 @@
       "animSpeed": 10,
       "scale": 0.75,
       "texture": "skeleton",
-      "shader": "sprite"
+      "shader": "sprite",
+      "ai": {
+        "speed": 20,
+        "vision": 380,
+        "fov": 360,
+        "loseTime": 1.2,
+        "repathInterval": 0.5
+      }
     }
   ]
 }

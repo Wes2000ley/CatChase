@@ -9,8 +9,8 @@
 
 //#include <glad/glad.h>
 
-#include "texture.h"
-#include "shader.h"
+#include "TEXTURE.h"
+#include "SHADER.h"
 #include "TEXT_RENDERER.h"
 
 
