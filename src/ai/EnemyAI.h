@@ -85,6 +85,9 @@ public:
 
             for (auto& d : dirs) {
                 glm::ivec2 nxt = cur + d;
+                // 🔒 Clamp to map grid bounds
+                if (nxt.x < 0 || nxt.y < 0) continue;
+                if (nxt.x >= int(mapSize.x / tW) || nxt.y >= int(mapSize.y / tH)) continue;
                 if (closed.count(nxt)) continue;
                 glm::vec2 world = ToWorld(nxt, cellX, cellY);
 
