@@ -80,16 +80,37 @@ add_custom_target(copy_resources ALL
         COMMENT "📁 Copying resources..."
 )
 add_dependencies(Game copy_resources)
+# ───────────────────────────────
+# ✅ Optional Self-Signing Step (Windows)
+# ───────────────────────────────
+if (WIN32 AND MSVC)
+    set(SIGNTOOL_PATH "C:/Program Files (x86)/Windows Kits/10/bin/10.0.18362.0/x64/signtool.exe")
+
+    add_custom_command(
+            TARGET Game POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "🔏 Self-signing Game.exe with local certificate..."
+            COMMAND powershell -NoLogo -NoProfile -Command ^
+            "$cert = Get-ChildItem Cert:\\CurrentUser\\My | Where-Object { $_.Subject -eq 'CN=GameDevLocal' }; " ^
+            "if ($cert) { & '${SIGNTOOL_PATH}' sign /n 'GameDevLocal' /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 '$<TARGET_FILE:Game>'; } " ^
+            "else { Write-Host '⚠️ No local signing certificate found (CN=GameDevLocal). Skipping.' }"
+            COMMENT "🔏 Signing build for local trust"
+    )
+endif()
 
 # ───────────────────────────────
-# ✅ Post-build ZIP packaging without tar
+# ✅ Windows-safe ZIP packaging (PowerShell)
 # ───────────────────────────────
-# On Windows, simply copy to a "Package" folder instead of zipping.
 add_custom_command(
         TARGET Game POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "📦 Creating package folder..."
+        COMMAND ${CMAKE_COMMAND} -E echo "📦 Packaging Game build into Game-Package.zip (PowerShell)..."
+        # Create staging folder
         COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Game>/Package"
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:Game>" "$<TARGET_FILE_DIR:Game>/Package/"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "$<TARGET_FILE_DIR:Game>/resources" "$<TARGET_FILE_DIR:Game>/Package/resources"
-        COMMENT "📦 Packaging Game build (no tar needed)"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "$<TARGET_FILE_DIR:Game>/resources"
+        "$<TARGET_FILE_DIR:Game>/Package/resources"
+        # Use PowerShell to zip (works everywhere on Win10/11)
+        COMMAND powershell -NoLogo -NoProfile -Command ^
+        "Compress-Archive -Path '$<TARGET_FILE_DIR:Game>\\Package\\*' -DestinationPath '$<TARGET_FILE_DIR:Game>\\CatChase.zip' -Force"
+        COMMENT "📦 Creating Game-Package.zip via PowerShell"
 )
