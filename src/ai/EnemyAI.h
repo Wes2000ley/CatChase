@@ -209,14 +209,14 @@ public:
 
         switch (state_) {
             case State::Idle:
-                patrolT_ -= dt;
                 if (see || proximityAlert) {
                     StartChase(player.center);
-                } else if (patrolT_ <= 0.0f) {
-                    patrolT_ = patrolInterval_;
-                    Patrol(e, maps, solidSet, tW, tH);
+                } else {
+                    // Continuous idle roaming
+                    UpdateIdleRoam(e, maps, solidSet, tW, tH, dt);
                 }
                 break;
+
 
             case State::Chase:
                 // Maintain last known position
@@ -469,6 +469,71 @@ private:
         if (len > 0.01f) dirFacing_ = delta / len;
         lastCenter_ = cur;
     }
+
+
+// ────────────────────────────────────────────────
+// Smooth roaming when idle
+// ────────────────────────────────────────────────
+
+// Roaming state
+bool roaming_ = false;
+glm::vec2 roamTarget_{0.0f};
+float roamTimer_ = 0.0f;
+float roamInterval_ = 5.0f;  // seconds between picking new roam targets
+float roamSpeed_ = 30.0f;    // slower than chase speed
+
+void UpdateIdleRoam(Enemy* e,
+                    const std::vector<const std::vector<std::vector<int>>*>& maps,
+                    const std::unordered_set<int>& solidSet,
+                    int tW, int tH, float dt)
+{
+    Circle cur = e->ComputeBoundingCircle();
+
+    // Pick new target occasionally or if we reached the old one
+    roamTimer_ -= dt;
+    if (!roaming_ || roamTimer_ <= 0.0f ||
+        glm::length(roamTarget_ - cur.center) < 4.0f) {
+
+        roaming_ = true;
+        roamTimer_ = roamInterval_ + (rand() % 3000) / 1000.0f; // randomize interval ±3s
+
+        // Pick a random nearby direction and distance
+        float angle = (rand() % 360) * 3.1415926f / 180.0f;
+        float distance = 48.0f + float(rand() % 64); // 48–112px radius
+        glm::vec2 candidate = cur.center + glm::vec2(std::cos(angle), std::sin(angle)) * distance;
+
+        // Clamp within map and ensure not blocked
+        glm::vec2 mapSize(maps[0]->at(0).size() * tW, maps[0]->size() * tH);
+        candidate.x = glm::clamp(candidate.x, 0.0f, mapSize.x - 1.0f);
+        candidate.y = glm::clamp(candidate.y, 0.0f, mapSize.y - 1.0f);
+
+        Circle probe{ candidate, cur.radius };
+        if (IsCircleBlocked(probe, maps, tW, tH, solidSet)) {
+            roaming_ = false; // skip if blocked
+            return;
+        }
+        roamTarget_ = candidate;
+    }
+
+    // Move toward roam target smoothly
+    glm::vec2 delta = roamTarget_ - cur.center;
+    float dist = glm::length(delta);
+    if (dist < 1.0f) return;
+
+    glm::vec2 dir = delta / dist;
+    glm::vec2 vel = dir * roamSpeed_;
+    glm::vec2 mapSize(maps[0]->at(0).size() * tW, maps[0]->size() * tH);
+
+    Circle move = cur;
+    if (TryMoveCircle(move, vel, dt, mapSize, maps, solidSet, tW, tH))
+        e->SetCenter(move.center);
+    else
+        TrySlide(e, cur, dir, dt, maps, solidSet, tW, tH);
+}
+
+
 };
+
+
 
 #endif // ENEMY_AI_H
